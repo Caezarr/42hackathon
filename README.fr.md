@@ -12,6 +12,8 @@ Il n'existe ni backend d'appels partagé, ni facture téléphonique centrale.
 
 Le dépôt contient aujourd'hui le contrat produit, l'architecture, les sources épinglées et le plan du hackathon. Les images runtime et les modèles ne sont pas encore verrouillés par digest. Le dialer de bout en bout et les commandes décrites ci-dessous ne sont pas encore implémentés.
 
+Un [POC autonome de clonage vocal local](voice-clone-poc/README.md) permet de tester séparément un échantillon WAV et la génération d'une phrase française avec Chatterbox Multilingual V3.
+
 ## Ce que nous construisons
 
 ```text

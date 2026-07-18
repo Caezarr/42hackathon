@@ -14,6 +14,8 @@ There is no shared calling backend and no central phone bill.
 
 This repository currently defines the hackathon product, architecture, source dependency pins, and build plan. Runtime image digests and model hashes are not locked yet. The end-to-end dialer is **not implemented yet**. Target commands below describe the experience we are building, not released functionality.
 
+A standalone [local voice-cloning proof of concept](voice-clone-poc/README.md) tests WAV reference audio and French phrase generation with Chatterbox Multilingual V3.
+
 ## What we are building
 
 ```mermaid
