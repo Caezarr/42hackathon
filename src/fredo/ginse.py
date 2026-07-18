@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import re
 import secrets
 import sqlite3
@@ -21,6 +22,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlsplit
+
+
+_DEBUG_AUTH_CLAIMS: dict[str, Any] = {}
+
+
+def debug_auth_claims() -> dict[str, Any]:
+    return dict(_DEBUG_AUTH_CLAIMS)
 
 
 ACTION_LABEL = "Prepare Fredo demo"
@@ -268,6 +276,17 @@ def validate_bearer_jwt(
             options={"require": ["exp", "iat", "iss", "aud"]},
         )
     except Exception as exc:
+        if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1":
+            try:
+                payload = parts[1].split(".")[1]
+                payload += "=" * (-len(payload) % 4)
+                decoded = json.loads(base64.urlsafe_b64decode(payload).decode("utf-8"))
+                _DEBUG_AUTH_CLAIMS.clear()
+                _DEBUG_AUTH_CLAIMS.update(
+                    {key: decoded.get(key) for key in ("iss", "aud", "kid") if key in decoded}
+                )
+            except Exception:
+                _DEBUG_AUTH_CLAIMS.clear()
         # Never reflect the JWT, claim values, or decoder detail to the caller.
         raise AuthenticationError("invalid bearer token") from exc
 

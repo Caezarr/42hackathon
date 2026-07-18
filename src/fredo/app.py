@@ -4,6 +4,7 @@ import asyncio
 import hmac
 import json
 import logging
+import os
 from urllib.parse import urlsplit
 
 from starlette.applications import Starlette
@@ -19,6 +20,7 @@ from .ginse import (
     ProviderError,
     SQLiteIdempotencyStore,
     build_manifest,
+    debug_auth_claims,
     prepare_fredo_demo_run,
 )
 from .policy import PolicyError, validate_call_request
@@ -139,15 +141,15 @@ def create_app(
             missing = settings.missing_for_real_call()
             if isinstance(telephony, MockTelephony):
                 missing = []
-        return JSONResponse(
-            {
+        payload = {
                 "status": "ready" if not missing else "not_ready",
                 "missing": missing,
                 "mode": "ginse-provider" if ginse_only else "voice",
                 "configuration": settings.public_summary(),
-            },
-            status_code=200 if not missing else 503,
-        )
+            }
+        if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1":
+            payload["auth_debug"] = debug_auth_claims()
+        return JSONResponse(payload, status_code=200 if not missing else 503)
 
     async def ginse_manifest(request: Request) -> JSONResponse:
         del request
