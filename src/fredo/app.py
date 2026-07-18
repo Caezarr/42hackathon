@@ -165,6 +165,8 @@ def create_app(
         return JSONResponse(payload, status_code=200 if not missing else 503)
 
     async def ginse_manifest(request: Request) -> JSONResponse:
+        if os.getenv("FREDO_HOSTED_APP") == "1":
+            return await hosted_manifest(request)
         del request
         if not settings.public_url or not settings.ginse_ownership_token:
             return JSONResponse({"error": "ginse_not_configured"}, status_code=503)
