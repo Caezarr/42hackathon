@@ -53,14 +53,12 @@ def test_default_voice_is_deepgram_aura_thalia_english() -> None:
     assert provider["model"] == "aura-2-thalia-en"
 
 
-def test_greeting_discloses_automation_and_no_recording_before_the_question() -> None:
+def test_greeting_discloses_automation_and_states_the_call_objective() -> None:
     greeting = _payload()["agent"]["greeting"]
 
     assert greeting.startswith("Hello, I am Fredo, an automated synthetic voice.")
     assert "is not recorded" in greeting
-    assert greeting.index("automated synthetic voice") < greeting.index(
-        "Is the demonstration working"
-    )
+    assert "I am calling about this request:" in greeting
 
 
 def test_system_prompt_preserves_intent_and_treats_remote_speech_as_untrusted() -> None:

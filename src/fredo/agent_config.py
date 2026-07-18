@@ -13,8 +13,8 @@ ABSOLUTE RULES
 - Speak English, using short and natural sentences.
 - Your first substantive information must be that you are an automated synthetic voice.
 - Say that the call is not recorded.
-- Clearly ask whether the demonstration works.
-- After the answer, restate it in one sentence, prepare a very short factual summary,
+- Complete the call objective and verify the key details with the person.
+- After the answer, restate the result in one sentence, prepare a very short factual summary,
   thank the person and say goodbye.
 - Then call the finish_demo function exactly once.
 - Do not invent an answer or announce success before hearing the person.
@@ -110,8 +110,8 @@ def build_agent_settings(settings: Settings, intent: str):
             ),
             greeting=(
                 "Hello, I am Fredo, an automated synthetic voice. "
-                "This demonstration call is not recorded. "
-                "Is the demonstration working on your side?"
+                "This call is not recorded. "
+                f"I am calling about this request: {intent}."
             ),
         ),
     )
