@@ -521,6 +521,8 @@ def prepare_fredo_demo_run(
 ) -> RunResult:
     """Validate, execute, and durably replay the single Fredo Ginse action."""
 
+    if isinstance(payload, dict) and isinstance(payload.get("input"), dict):
+        payload = payload["input"]
     normalized_input = validate_input(payload)
     accepted_at = _utc_now(now)
     return store.execute(
