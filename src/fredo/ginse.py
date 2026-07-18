@@ -253,6 +253,10 @@ def validate_bearer_jwt(
     for dependency injection; it must implement the ``jwt.decode`` signature.
     """
 
+    if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1":
+        _DEBUG_AUTH_CLAIMS.clear()
+        _DEBUG_AUTH_CLAIMS["authorization_present"] = bool(authorization)
+        _DEBUG_AUTH_CLAIMS["authorization_parts"] = len(authorization.split()) if authorization else 0
     if not authorization:
         raise AuthenticationError("missing bearer token")
     parts = authorization.split()
