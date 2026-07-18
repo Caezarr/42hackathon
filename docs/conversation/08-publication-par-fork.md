@@ -26,3 +26,9 @@ Le flux GitHub standard est utilisé :
 
 Ce mécanisme permet à l’équipe propriétaire de relire puis fusionner les documents sans accorder de droit d’écriture direct supplémentaire.
 
+## Résultat
+
+- Branche : `cristalineIOI:agent/add-conversation-docs`
+- Premier commit : `8bcb86d`
+- Pull request : [Caezarr/42hackathon#1](https://github.com/Caezarr/42hackathon/pull/1)
+- Statut initial : brouillon
