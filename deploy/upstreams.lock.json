@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "audited_at": "2026-07-18",
+  "policy": {
+    "default_profile": "core",
+    "source": "Every repository is checked out at an immutable commit.",
+    "runtime": "OCI images and model files require separate immutable digests before release.",
+    "licenses": "Source and model licenses must be rechecked before redistribution."
+  },
+  "upstreams": [
+    {
+      "id": "livekit",
+      "profiles": ["core"],
+      "role": "Self-hosted realtime media server",
+      "repository": "https://github.com/livekit/livekit.git",
+      "revision": "0b3fd288e3ef3263ec475ba0d78cf3ad77459981",
+      "license": "Apache-2.0",
+      "required": true
+    },
+    {
+      "id": "livekit-sip",
+      "profiles": ["core"],
+      "role": "Self-hosted SIP bridge",
+      "repository": "https://github.com/livekit/sip.git",
+      "revision": "32ea43c5a7e1c52a76dd541fe00a5aef49973429",
+      "license": "Apache-2.0",
+      "required": true
+    },
+    {
+      "id": "pipecat",
+      "profiles": ["core"],
+      "role": "Streaming voice-agent pipeline and LiveKit transport",
+      "repository": "https://github.com/pipecat-ai/pipecat.git",
+      "revision": "5b5cc30ff223b45f59a49cb33d6cb7c6b35d5b98",
+      "license": "BSD-2-Clause",
+      "required": true
+    },
+    {
+      "id": "localai",
+      "profiles": ["core", "mac-metal", "linux-cpu"],
+      "role": "Initial local OpenAI-compatible STT, LLM, and TTS gateway",
+      "repository": "https://github.com/mudler/LocalAI.git",
+      "revision": "0389495388dd73cd5b3292860fd6d3254dfbb37b",
+      "license": "MIT",
+      "required": true
+    },
+    {
+      "id": "agent-starter-react",
+      "profiles": ["core"],
+      "role": "Reference LiveKit browser client and donor UI",
+      "repository": "https://github.com/livekit-examples/agent-starter-react.git",
+      "revision": "5aa1c17ba8cc014b7e1c393a95b8ac81c0f520fb",
+      "license": "MIT",
+      "required": false
+    },
+    {
+      "id": "asterisk",
+      "profiles": ["android-bt", "telecom-lab"],
+      "role": "Optional Linux Bluetooth phone/SIM and PBX bridge",
+      "repository": "https://github.com/asterisk/asterisk.git",
+      "revision": "ea9b48659d3fb861bd8d6d5b88512d48bf63f8a7",
+      "license": "GPL-2.0",
+      "required": false
+    },
+    {
+      "id": "vllm",
+      "profiles": ["linux-nvidia"],
+      "role": "High-concurrency NVIDIA LLM serving",
+      "repository": "https://github.com/vllm-project/vllm.git",
+      "revision": "c233d90aa826df072872df47b201450059be8e71",
+      "license": "Apache-2.0",
+      "required": false
+    },
+    {
+      "id": "speaches",
+      "profiles": ["linux-nvidia"],
+      "role": "Local OpenAI-compatible faster-whisper STT",
+      "repository": "https://github.com/speaches-ai/speaches.git",
+      "revision": "993994f7984bf3fe9655b267448328cf66fccb42",
+      "license": "MIT",
+      "required": false
+    },
+    {
+      "id": "kokoro-fastapi",
+      "profiles": ["linux-nvidia"],
+      "role": "Local low-latency TTS service",
+      "repository": "https://github.com/remsky/Kokoro-FastAPI.git",
+      "revision": "b291abe69e955de67be3969402162a2975b924b5",
+      "license": "Apache-2.0",
+      "required": false
+    },
+    {
+      "id": "moshi",
+      "profiles": ["wow-lab"],
+      "role": "Experimental full-duplex speech-to-speech mode",
+      "repository": "https://github.com/kyutai-labs/moshi.git",
+      "revision": "e6a55d2722a65870ef52a6c9f6ecfc0e90f38362",
+      "license": "MIT AND Apache-2.0; model weights CC-BY-4.0",
+      "required": false
+    }
+  ]
+}
