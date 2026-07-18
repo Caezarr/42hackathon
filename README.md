@@ -131,6 +131,16 @@ The provider contract requires Ed25519 bearer verification, strict schemas and
 durable SQLite idempotency. Publishing and live verification remain before the
 final jury gate. See [docs/GINSE.md](docs/GINSE.md).
 
+## Deploy the Ginse provider on Render
+
+The repository includes a [`render.yaml`](render.yaml) Blueprint. In Render,
+create a new Blueprint from `Caezarr/42hackathon`, choose the `render.yaml`
+file, and use the generated `onrender.com` URL as `FREDO_PUBLIC_URL`. Fill the
+four `sync: false` Ginse variables from the official Ginse bootstrap, then
+redeploy. The Blueprint uses the existing Docker image, `/health` check and a
+1 GB persistent disk for the Ginse idempotency database. Render persistent
+disks require a paid web-service plan.
+
 ## Commands
 
 ```text

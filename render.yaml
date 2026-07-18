@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: fredo-ginse-42hackathon
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: FREDO_HOST
+        value: 0.0.0.0
+      - key: FREDO_PORT
+        value: "8080"
+      - key: FREDO_GINSE_ISSUER
+        value: https://api.ginse.ai
+      - key: FREDO_GINSE_DATABASE
+        value: /data/ginse.sqlite3
+      - key: FREDO_PUBLIC_URL
+        sync: false
+      - key: FREDO_GINSE_PUBLIC_KEY_PEM
+        sync: false
+      - key: FREDO_GINSE_AUDIENCE
+        sync: false
+      - key: FREDO_GINSE_OWNERSHIP_TOKEN
+        sync: false
+    disk:
+      name: fredo-ginse-data
+      mountPath: /data
+      sizeGB: 1
