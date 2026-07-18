@@ -242,7 +242,12 @@ def create_app(
                 await registry.update(
                     record.call_id,
                     CallStatus.COMPLETED,
-                    outcome={"mock": True, "works": False, "answer": "No real call placed"},
+                    outcome={
+                        "mock": True,
+                        "works": False,
+                        "answer": "No real call placed",
+                        "summary": "No real call placed",
+                    },
                 )
             snapshot = await registry.snapshot(record.call_id)
             return JSONResponse({**(snapshot or {}), "replayed": False}, status_code=202)

@@ -40,9 +40,10 @@ intent, audio, transcript, credentials or result.
 
 ## Team-Mac setup
 
-Prerequisites for the current hackathon build are Apple Silicon/macOS,
-[`uv`](https://docs.astral.sh/uv/) and `cloudflared`. The demo operator performs
-this once:
+The current hackathon build targets Apple Silicon/macOS. The first Fredo
+invocation runs the bootstrap script, installs missing `uv`/`cloudflared` via
+Homebrew when available, and downloads the pinned dependency graph. The demo
+operator performs this once:
 
 ```bash
 git clone https://github.com/Caezarr/42hackathon.git
@@ -114,7 +115,7 @@ Target jury prompt:
 > Use Ginse to prepare Fredo from `github.com/Caezarr/42hackathon`, then call
 > `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in
 > French, disclose immediately that you are an automated synthetic voice, ask
-> whether the demo works, then return the answer here.
+> whether the demo works, then return the answer and a concise factual summary here.
 
 ## Ginse contract
 

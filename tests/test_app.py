@@ -172,6 +172,7 @@ def test_mock_call_completes_without_network_and_returns_only_public_state() -> 
             "mock": True,
             "works": False,
             "answer": "No real call placed",
+            "summary": "No real call placed",
         }
         assert "twilio_sid" not in body
         assert DESTINATION not in response.text

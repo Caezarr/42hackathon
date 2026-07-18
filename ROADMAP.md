@@ -32,7 +32,7 @@ Deliver:
 - Twilio outbound call with fixed verified caller ID;
 - local μ-law 8 kHz bridge to Deepgram Voice Agent;
 - French Flux Multilingual + Aura-2 Agathe configuration;
-- tool-limited structured `finish_demo` result;
+- tool-limited structured `finish_demo` result with answer and summary;
 - automatic Cloudflare quick tunnel and teardown;
 - Twilio signature validation, duration cap and concurrency one.
 
@@ -108,7 +108,7 @@ Rehearse from a clean checkout on the team Mac:
 
 ```text
 one prompt -> Ginse preparation receipt -> doctor -> native confirmation
-           -> real call -> structured answer in same Codex task
+           -> real call -> structured answer + summary in same Codex task
 ```
 
 Exit:

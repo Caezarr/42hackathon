@@ -154,7 +154,13 @@ async def test_finish_hangup_covers_both_deepgram_event_orders(
             AgentV1FunctionCallRequestFunctionsItem(
                 id="function-1",
                 name="finish_demo",
-                arguments=json.dumps({"works": True, "answer": "Oui, ça fonctionne."}),
+                arguments=json.dumps(
+                    {
+                        "works": True,
+                        "answer": "Oui, ça fonctionne.",
+                        "summary": "Le juge confirme que la démonstration fonctionne.",
+                    }
+                ),
                 client_side=True,
             )
         ]
@@ -167,7 +173,13 @@ async def test_finish_hangup_covers_both_deepgram_event_orders(
         session._agent_audio_done.set()
     await session._finish_task
 
-    assert outcomes == [{"works": True, "answer": "Oui, ça fonctionne."}]
+    assert outcomes == [
+        {
+            "works": True,
+            "answer": "Oui, ça fonctionne.",
+            "summary": "Le juge confirme que la démonstration fonctionne.",
+        }
+    ]
     assert len(connection.function_responses) == 1
     assert websocket.sent[-1] == {
         "event": "mark",

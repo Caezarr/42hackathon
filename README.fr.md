@@ -31,7 +31,7 @@ reçoit l'audio et le contexte de conversation ; Twilio reçoit le numéro et le
 média. Ginse ne reçoit jamais numéro, intention, audio, transcript, clés ou
 résultat.
 
-## Préparation unique du Mac équipe
+## Préparation automatique du premier prompt
 
 ```bash
 git clone https://github.com/Caezarr/42hackathon.git
@@ -87,7 +87,7 @@ Prompt cible :
 > `github.com/Caezarr/42hackathon`, puis appelle `<PHONE_E164>`. Ce numéro
 > appartient à un juge consentant. Présente Fredo en français, annonce tout de
 > suite que tu es une voix synthétique automatisée, demande si la démo marche,
-> puis rapporte la réponse ici.
+> puis rapporte la réponse et un résumé factuel ici.
 
 ## Développement
 

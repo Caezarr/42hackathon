@@ -45,8 +45,8 @@ transcripts stay on the Mac.
 - required idempotency key with same-request replay and divergent conflict;
 - Twilio signature verification on status callbacks and WebSocket handshake;
 - recording never requested;
-- one Deepgram function, `finish_demo`, limited to recording the answer and
-  ending the current call;
+- one Deepgram function, `finish_demo`, limited to recording the answer and a
+  factual summary, then ending the current call;
 - mock transport rejected by the judged `fredo demo` command.
 
 ## Known limitations
@@ -92,8 +92,8 @@ Phone audio cannot:
 - invoke a shell, Codex/MCP tool, installer or network action;
 - read secrets, local files, other transcripts or system prompts.
 
-The only allowed side effect is storing the current demo answer and terminating
-the already-authorized current call.
+The only allowed side effect is storing the current demo answer/summary and
+terminating the already-authorized current call.
 
 ## Prohibited behavior
 

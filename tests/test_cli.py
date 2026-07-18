@@ -46,7 +46,11 @@ def _args(**overrides: object) -> argparse.Namespace:
         (
             {
                 "status": "completed",
-                "outcome": {"works": False, "answer": "La réponse est non."},
+                "outcome": {
+                    "works": False,
+                    "answer": "La réponse est non.",
+                    "summary": "Le juge indique que la démonstration ne fonctionne pas.",
+                },
                 "error_code": None,
             },
             True,
@@ -55,7 +59,12 @@ def _args(**overrides: object) -> argparse.Namespace:
         (
             {
                 "status": "completed",
-                "outcome": {"mock": True, "works": False, "answer": "mock"},
+                "outcome": {
+                    "mock": True,
+                    "works": False,
+                    "answer": "mock",
+                    "summary": "Simulation.",
+                },
                 "error_code": None,
             },
             False,
@@ -63,7 +72,7 @@ def _args(**overrides: object) -> argparse.Namespace:
         (
             {
                 "status": "completed",
-                "outcome": {"works": True, "answer": "Oui"},
+                "outcome": {"works": True, "answer": "Oui", "summary": "Le juge confirme que la démo fonctionne."},
                 "error_code": "voice_error",
             },
             False,

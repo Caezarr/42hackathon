@@ -85,9 +85,10 @@ def test_finish_demo_is_the_single_tool_with_a_closed_required_outcome_shape() -
     assert functions[0]["name"] == "finish_demo"
     parameters = functions[0]["parameters"]
     assert parameters["type"] == "object"
-    assert parameters["required"] == ["works", "answer"]
+    assert parameters["required"] == ["works", "answer", "summary"]
     assert parameters["properties"]["works"]["type"] == "boolean"
     assert parameters["properties"]["answer"]["type"] == "string"
+    assert parameters["properties"]["summary"]["type"] == "string"
     assert "aucun outil autre que finish_demo" in think["prompt"]
 
 
