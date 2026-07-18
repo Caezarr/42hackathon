@@ -110,19 +110,23 @@ codex plugin add fredo@fredo-local
 Installed skills are loaded in a new Codex task/session. During an initial
 same-task install, Codex invokes the newly installed `fredo` executable directly.
 
-Target jury prompt (English):
+Copyable Ginse prompt (English):
 
-> Call `<NAME>` at `<PHONE_E164>` to talk about `<PURPOSE>`. This number belongs
-> to a consenting judge. If this is Fredo's first run, briefly tell me that you
-> are installing the dependencies and it will take a short moment; after that,
-> calls should be one prompt. Speak English, disclose immediately that you are
-> an automated synthetic voice, ask whether the demo works, then return the
-> answer and a concise factual summary here.
+> Use app.ginse.ai/gabranpro-45ef4a/fredo-demo
+>
+> Before acting, ask me for who I am, who I want to call, the destination in
+> E.164 format (for example `+33612345678`), and what I want to accomplish.
+> Confirm that the person consented to the call. If this is Fredo's first run,
+> briefly tell me that dependencies are being installed and it will take a
+> short moment; after that, the flow is one prompt. Speak English, introduce
+> yourself as Fredo, disclose that you are an automated synthetic voice and
+> that the call is not recorded, complete the requested objective, then return
+> the answer and a concise factual summary here.
 
 ## Ginse contract
 
-Ginse is mandatory and deliberately narrow. Fredo exposes one fixed-price
-action, **Prepare Fredo demo**, at EUR 0.42 of hackathon test balance. It accepts
+Ginse is mandatory and deliberately narrow. Fredo — Team Fredo exposes one
+fixed-price action, **Prepare Fredo demo**, at EUR 0.42 of hackathon test balance. It accepts
 only the platform/profile selectors and returns data-only compatibility/session
 fields. Provider output never contains an installation command or URL because
 Ginse correctly classifies builder output as untrusted data.

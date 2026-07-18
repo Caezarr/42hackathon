@@ -1,7 +1,7 @@
 # Ginse contract for Fredo
 
-Status: implemented provider contract for [`GOAL.md`](../GOAL.md)
-`hosted-voice-mvp`; deployment, verification and publication are still pending.
+Status: published and verified provider contract for [`GOAL.md`](../GOAL.md)
+`hosted-voice-mvp`.
 
 Ginse is Fredo's mandatory catalog, test-payment and invocation layer. It runs
 one fixed-price preparation action before a judged call. It never places a
@@ -21,7 +21,7 @@ Mac demo profile -> Prepare Fredo demo -> Fredo demo session
 
 | Field | Value |
 | --- | --- |
-| Display name | `Fredo — 42hackathon` |
+| Display name | `Fredo — Team Fredo` |
 | Slug | `fredo-demo` |
 | Fixed test price | EUR 0.42 |
 | Manifest | `GET /.well-known/ginse.json` |

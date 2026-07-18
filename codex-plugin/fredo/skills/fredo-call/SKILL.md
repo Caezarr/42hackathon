@@ -125,8 +125,8 @@ confirmed purpose and audio to Deepgram.
 
 6. Let Fredo display the complete native preview and wait for the human click.
    A rejection or closed dialog means no call. Fredo discloses synthetic voice
-   and no recording, asks whether the demo works, then returns `works`, a
-   faithful `answer`, and a short factual `summary` to the same Codex task.
+   and no recording, completes the requested objective, then returns `works`,
+   a faithful `answer`, and a short factual `summary` to the same Codex task.
 
 7. Report only what Fredo's structured result establishes. A successful process
    exit alone does not prove a real call. If the result reports `mock`, `stub`,
