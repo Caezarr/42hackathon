@@ -53,3 +53,11 @@ Pour chaque push direct :
 6. pousser sur `main`.
 
 La pull request #1 sera fermée après confirmation que les documents sont présents directement sur `main`.
+
+## Résultat
+
+- Le travail du coéquipier a été fusionné sur `main` via la PR #2.
+- Les commits documentaires ont été rebasés au-dessus de ce merge sans conflit.
+- Le push direct vers `Caezarr/42hackathon:main` a réussi au commit `37258d8`.
+- La pull request #1, devenue inutile, a été fermée.
+- Le checkout local actif suit désormais directement `upstream/main`.
