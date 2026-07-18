@@ -201,7 +201,7 @@ def create_app(
             )
             return JSONResponse(run_result.as_dict(), status_code=200)
         except ProviderError as exc:
-            if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1" and exc.code == "invalid_input":
+            if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1":
                 _debug_input = payload if isinstance(payload, dict) else {}
                 from . import ginse as _ginse_module
 
