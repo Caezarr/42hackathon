@@ -36,10 +36,10 @@ class Settings:
     max_duration_seconds: int = 180
     max_concurrent_calls: int = 1
     listen_model: str = "flux-general-multi"
-    listen_language: str = "fr"
+    listen_language: str = "en"
     llm_provider: str = "open_ai"
     llm_model: str = "gpt-4o-mini"
-    voice_model: str = "aura-2-agathe-fr"
+    voice_model: str = "aura-2-thalia-en"
     telephony_provider: str = "real"
     state_dir: Path = Path(".local-state")
     ginse_public_key_pem: str | None = None
@@ -85,10 +85,10 @@ class Settings:
             max_duration_seconds=max_duration,
             max_concurrent_calls=max_concurrent,
             listen_model=env.get("FREDO_LISTEN_MODEL", "flux-general-multi"),
-            listen_language=env.get("FREDO_LISTEN_LANGUAGE", "fr"),
+            listen_language=env.get("FREDO_LISTEN_LANGUAGE", "en"),
             llm_provider=env.get("FREDO_LLM_PROVIDER", "open_ai"),
             llm_model=env.get("FREDO_LLM_MODEL", "gpt-4o-mini"),
-            voice_model=env.get("FREDO_VOICE_MODEL", "aura-2-agathe-fr"),
+            voice_model=env.get("FREDO_VOICE_MODEL", "aura-2-thalia-en"),
             telephony_provider=provider,
             state_dir=state_dir,
             ginse_public_key_pem=ginse_public_key,

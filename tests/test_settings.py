@@ -7,7 +7,7 @@ import pytest
 from fredo.settings import Settings
 
 
-def test_empty_environment_uses_guarded_french_voice_defaults() -> None:
+def test_empty_environment_uses_guarded_english_voice_defaults() -> None:
     settings = Settings.from_env({})
 
     assert settings.deepgram_api_key is None
@@ -17,10 +17,10 @@ def test_empty_environment_uses_guarded_french_voice_defaults() -> None:
     assert settings.max_duration_seconds == 180
     assert settings.max_concurrent_calls == 1
     assert settings.listen_model == "flux-general-multi"
-    assert settings.listen_language == "fr"
+    assert settings.listen_language == "en"
     assert settings.llm_provider == "open_ai"
     assert settings.llm_model == "gpt-4o-mini"
-    assert settings.voice_model == "aura-2-agathe-fr"
+    assert settings.voice_model == "aura-2-thalia-en"
     assert settings.telephony_provider == "real"
 
 

@@ -1,6 +1,6 @@
 ---
 name: fredo-call
-description: Handle guarded Fredo phone-call requests in English or French; use when a user asks Codex to call or phone a consenting recipient with the local Fredo CLI.
+description: Handle guarded Fredo phone-call requests in English; use when a user asks Codex to call or phone a consenting recipient with the local Fredo CLI.
 ---
 
 # Fredo call / Appel Fredo
@@ -11,10 +11,10 @@ dependencies during the demo. Fredo sends the destination to Twilio and the
 confirmed purpose plus live audio to Deepgram as required by the documented
 hosted profile.
 
-Transforme un prompt naturel en une exécution Fredo protégée. Le jury ne tape
-aucune commande, ne choisit aucun modèle, ne copie aucun reçu Ginse et ne gère
-aucune dépendance pendant la démo. Le profil hébergé transmet le numéro à
-Twilio, puis le but confirmé et l'audio à Deepgram.
+Transform a natural English prompt into one guarded Fredo run. The jury types
+no command, chooses no model, copies no Ginse receipt and manages no dependency
+during the demo. The hosted profile sends the number to Twilio, then the
+confirmed purpose and audio to Deepgram.
 
 ## Safety contract / Contrat de sécurité
 
@@ -53,9 +53,13 @@ Twilio, puis le but confirmé et l'audio à Deepgram.
    ./scripts/bootstrap.sh
    ```
 
-   The script installs missing `uv`/`cloudflared` through Homebrew when
-   available and runs `uv sync --frozen --extra dev`. Do not ask the judge to
-   type it. If the prepared machine has no package-manager path, report the
+   Before running it, tell the judge: “This is Fredo's first run, so I’m
+   installing the dependencies now. It should only take a short moment. After
+   this, placing a call is one prompt.” The script installs missing
+   `uv`/`cloudflared` through Homebrew when available and runs
+   `uv sync --frozen --extra dev`. On later calls, say the dependencies are
+   already installed and continue directly. Do not ask the judge to type a
+   command. If the prepared machine has no package-manager path, report the
    missing operator prerequisite instead of pretending the call started.
 
 3. Prepare the demo through Ginse before starting Fredo. Follow the current
@@ -113,7 +117,7 @@ Twilio, puis le but confirmé et l'audio à Deepgram.
      --ginse-demo-session-id '<demo_session_id>' \
      --ginse-expires-at '<expires_at>' \
      --to '<E164>' \
-     --intent 'Parler à <name> de <purpose>'
+     --intent 'Speak with <name> about <purpose>'
    ```
 
    Reject shell control characters rather than interpolating them. The command
