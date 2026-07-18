@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 import secrets
 import sys
 from typing import Any
@@ -264,11 +265,16 @@ async def _demo(args: argparse.Namespace, settings: Settings) -> int:
 def _serve(settings: Settings, *, ginse_only: bool = False) -> int:
     from .app import create_app, missing_for_ginse_provider
 
-    missing = (
-        missing_for_ginse_provider(settings)
-        if ginse_only
-        else settings.missing_for_real_call()
-    )
+    if ginse_only:
+        missing = missing_for_ginse_provider(settings)
+    else:
+        missing = settings.missing_for_real_call()
+        if os.getenv("FREDO_HOSTED_MODE") == "1":
+            missing = [
+                item
+                for item in missing
+                if item not in {"FREDO_ENDPOINT_SECRET", "FREDO_ALLOWED_NUMBERS"}
+            ]
     if missing:
         raise RuntimeError(f"Missing configuration: {', '.join(missing)}")
     import uvicorn
