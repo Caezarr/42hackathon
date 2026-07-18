@@ -44,6 +44,12 @@ case "$PROFILE" in
   android-bt)
     JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("android-bt")))'
     ;;
+  telecom-lab)
+    JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("telecom-lab")))'
+    ;;
+  voice-lab)
+    JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("voice-lab")) or (.profiles | index("wow-lab")))'
+    ;;
   linux-nvidia)
     JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("linux-nvidia")))'
     ;;
@@ -51,7 +57,7 @@ case "$PROFILE" in
     JQ_FILTER='.'
     ;;
   *)
-    printf 'Unknown source bundle %s. Use core, android-bt, linux-nvidia, or all.\n' "$PROFILE" >&2
+    printf 'Unknown source bundle %s. Use core, telecom-lab, voice-lab, android-bt, linux-nvidia, or all.\n' "$PROFILE" >&2
     exit 1
     ;;
 esac

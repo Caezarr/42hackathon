@@ -23,6 +23,13 @@ This project touches phone numbers, audio, credentials, and public telecom netwo
 - recording disabled by default;
 - a local kill switch;
 - no auto-update that executes unverified artifacts.
+- one-use confirmation bound to the destination, intent, caller identity, and duration;
+- automated synthetic-voice disclosure at the beginning of the call;
+- a Ginse boundary that accepts only a platform profile and returns only a bootstrap plan.
+
+## Ginse data boundary
+
+The public Ginse provider must never receive phone numbers, contacts, call intents, SIP credentials, audio, transcripts, or call results. Bootstrap plans contain immutable source identifiers and digests, not request-supplied shell commands.
 
 ## Reporting a vulnerability
 

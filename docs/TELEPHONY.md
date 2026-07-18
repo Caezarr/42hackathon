@@ -1,81 +1,128 @@
-# Telephony transports
+# Fredo telephony plan
 
-The project does not manufacture access to the public phone network. Each operator connects a transport they own.
+Fredo supplies call control and local voice intelligence. Each installer supplies a real telecom transport and caller identity they own.
 
-## Comparison
+## Hackathon target
 
-| Transport | Public phone calls | External dependency | Status |
-| --- | --- | --- | --- |
-| Browser/WebRTC | No | None on a local network | First development target |
-| User SIP trunk | Yes | Operator's SIP carrier | Primary PSTN target |
-| GSM/LTE-to-SIP | Yes | Operator's SIM and cellular network | Preferred zero-API SIM path |
-| Android Bluetooth | Yes | Operator's Android phone, SIM, Linux, BlueZ | Experimental |
+- outbound calls only;
+- one active call;
+- one operator-owned SIP trunk;
+- one carrier-verified caller number;
+- one controlled destination before the judge call;
+- PCMA/PCMU acceptable for the first public call;
+- recording disabled.
 
-## Browser/WebRTC
+The first judged destination is the real phone of a consenting jury member.
 
-The browser transport proves the realtime audio and local inference loop without telecom cost. It cannot dial a public phone number.
-
-## User-owned SIP
-
-LiveKit SIP connects to credentials supplied by the operator. Caller identity must be a number the carrier has verified for that account. SIP remains the cleanest production transport.
-
-The reproducible topology depends on the carrier:
-
-- a registered outbound trunk may tolerate NAT, but RTP must still return to the advertised address;
-- a direct SIP peer normally needs a stable public IP or an operator-owned public edge;
-- SIP commonly uses UDP/TCP 5060 or TLS 5061;
-- the planned LiveKit SIP RTP range is UDP 10000–20000;
-- the planned LiveKit RTC media range is separate, for example UDP 50000–60000;
-- HTTPS/WSS and any SIP TLS endpoint need valid certificates;
-- Postgres, Valkey, workers, and inference endpoints are never exposed publicly.
-
-A laptop behind CGNAT may need an operator-owned Linux edge linked to the private machine over WireGuard. The project does not provide a shared edge. The judged hackathon topology uses exactly this model: the reference Mac runs the control and inference path, while one team-owned public Linux edge terminates LiveKit/SIP and connects back over WireGuard.
-
-Reference deployment documentation:
-
-- [LiveKit self-hosting](https://docs.livekit.io/transport/self-hosting/deployment/)
-- [LiveKit SIP server](https://docs.livekit.io/transport/self-hosting/sip-server/)
-
-## GSM/LTE-to-SIP gateway
-
-The operator inserts a SIM into a local gateway that exposes SIP on the LAN:
+## Hero path
 
 ```text
-LiveKit SIP -> LAN gateway -> operator SIM -> cellular network
+Pipecat
+  <-> LiveKit room
+  <-> LiveKit SIP
+  <-> Asterisk PJSIP
+  <-> registered SIP trunk
+  <-> PSTN
+  <-> judge phone
 ```
 
-This removes a cloud telephony API but not the cellular network. The gateway must be isolated from the public internet, use a changed administrator password, and pass codec, DTMF, answer, and hangup tests.
+This path is intentionally excessive:
 
-When LiveKit SIP and the GSM gateway share the operator's LAN, SIP signaling and RTP stay LAN-only. The gateway itself is the cellular boundary and should not expose an administrator interface to the WAN.
+- Pipecat controls the conversation graph and interruptions;
+- LiveKit provides the realtime room and supervision;
+- LiveKit SIP bridges room media to SIP;
+- Asterisk handles carrier registration, codec/DTMF quirks, CDR and later hardware transports.
 
-## Android Bluetooth bridge
+It remains the hero path only if it completes two consecutive real calls.
 
-Asterisk's `chan_mobile` can use a Bluetooth phone as an FXO device and dial through it:
+## Fallback ladder
+
+1. **LiveKit SIP -> carrier directly.** Remove Asterisk when the carrier works cleanly without it.
+2. **Pipecat -> Asterisk -> carrier.** Remove LiveKit supervision when it blocks the first real call.
+3. **PyVoIP diagnostic.** Use a minimal pure-Python SIP/RTP client to isolate registration, G.711 and RTP problems.
+
+Never keep two failing paths active during the same debugging window.
+
+## PyVoIP boundary
+
+[PyVoIP](https://github.com/tayler6000/pyVoIP) is a useful laboratory dependency because it is pure Python and documents PCMA, PCMU and telephone-event support. It does not provide a sound layer, and its documented G.711 path is 8 kHz mono. Fredo must own buffering, resampling and integration with the voice pipeline.
+
+PyVoIP is GPL-3.0. It remains an isolated development dependency until redistribution and combined-work licensing are reviewed.
+
+It is not the judged carrier abstraction for NAT, secure media, observability or operator diversity.
+
+## Mac-first networking
+
+The first attempt runs locally on the M4 Pro Mac:
+
+- native Fredo daemon and local inference;
+- local containers for LiveKit, LiveKit SIP and Asterisk when selected;
+- registered outbound SIP trunk;
+- explicit UDP port and advertised-address configuration.
+
+Typical planned ports must be made configurable:
+
+- SIP UDP/TCP 5060 or TLS 5061;
+- LiveKit SIP RTP UDP 10000–20000;
+- LiveKit RTC media on a separate configured UDP range;
+- local HTTPS/WSS endpoints with valid certificates only when browser access requires them.
+
+A public telecom edge plus WireGuard is introduced only if:
+
+- the carrier requires a stable public peer;
+- CGNAT prevents correct RTP return;
+- Docker Desktop networking cannot satisfy the media path;
+- the team chooses to colocate the already-required public Ginse provider with telecom services.
+
+The edge never runs Fredo models or stores transcripts.
+
+## Audio boundary
+
+Public telephony commonly delivers 8 kHz G.711 audio. Local engines may expect 16 kHz or 24 kHz. Fredo must measure and test:
 
 ```text
-LiveKit SIP -> Asterisk -> Dial(Mobile/device/number)
-            -> Bluetooth HFP/SCO -> Android phone -> SIM
+carrier 8 kHz -> jitter buffer -> resampler -> local voice engine
+local voice engine -> resampler -> G.711 packetizer -> carrier
 ```
 
-Requirements and limitations:
+Moshi's Mimi codec uses 24 kHz audio. The Moshi experiment is not accepted until the complete 8 kHz PSTN round trip remains intelligible and meets latency gates.
 
-- Linux and BlueZ;
-- a paired Android phone owned by the operator;
-- direct Bluetooth and D-Bus access;
-- normally one active phone per Bluetooth adapter;
-- narrow-band and device-dependent SCO audio;
-- more fragile reconnection than SIP.
+## Identity and policy
 
-This transport should run natively on Linux or on a small user-owned Linux bridge, not inside an ordinary unprivileged container.
+Caller-ID spoofing is outside scope. Fredo presents only an identity verified by the configured carrier.
 
-Official Asterisk references:
+Before the transport receives a dial command, Fredo must:
 
-- [Introduction to the Mobile Channel](https://docs.asterisk.org/Configuration/Channel-Drivers/Mobile-Channel/Introduction-to-the-Mobile-Channel/)
-- [Mobile Channel Features](https://docs.asterisk.org/Configuration/Channel-Drivers/Mobile-Channel/Mobile-Channel-Features/)
-- [Mobile Channel Requirements](https://docs.asterisk.org/Configuration/Channel-Drivers/Mobile-Channel/Mobile-Channel-Requirements/)
+- normalize the destination to E.164;
+- apply country and destination policy;
+- block emergencies, premium-rate numbers, short codes and prohibited ranges;
+- verify a fresh one-use confirmation bound to number and intent;
+- claim the local idempotency key;
+- enforce the one-active-call limit.
 
-## Identity and destination policy
+## Transport contract
 
-Caller-ID spoofing is not a transport and is outside project scope. The stack presents only the real SIM number or a carrier-verified SIP identity.
+Every implementation exposes:
 
-Every live transport must block emergency, premium-rate, short-code, and prohibited destinations before any side effect. A transport is not ready until a consented test call confirms bidirectional audio, DTMF, hangup, and event reporting.
+```text
+configure -> doctor -> dial -> events -> send_audio -> receive_audio -> hangup
+```
+
+Required normalized events:
+
+```text
+trying, ringing, answered, media_started, dtmf, media_stopped, hung_up, failed
+```
+
+Every event carries the same Fredo `call_id` and a monotonic local timestamp.
+
+## Proof before the judge
+
+- carrier registration survives ten minutes;
+- two consecutive controlled calls complete;
+- expected caller ID appears;
+- ring, answer, DTMF and hangup events are observed;
+- bidirectional audio runs for 90 seconds;
+- one barge-in works;
+- no secret or complete phone number appears in public logs;
+- repeating an idempotency key creates no second carrier call.

@@ -1,87 +1,128 @@
-# First-run bootstrap
+# Fredo first-run bootstrap
 
-Status: implementation contract.
+Status: hackathon implementation contract.
 
-The installation experience is download-heavy once and quiet afterwards. A call must never discover that a model or runtime is missing and begin an implicit download.
+The supported first run begins in Ginse and ends with a healthy local Fredo runtime. A live call must never discover a missing model or dependency and start an implicit download.
+
+## Entry flow
+
+```text
+Ginse BootstrapPlan
+  -> validate schema, repository, commit and manifest digest
+  -> show local writes, downloads, disk cost and privileges
+  -> explicit human approval
+  -> install pinned Fredo Codex plugin
+  -> fredo bootstrap apply
+  -> fredo doctor --json
+  -> explicit handoff to a fresh Codex task that loads the plugin
+```
+
+Ginse returns declarations only. It never returns arbitrary shell to execute.
 
 ## Target commands
 
 ```text
-phone-stack init --compute auto --transport browser|sip|gsm-sip|android-bt
-phone-stack plan
-phone-stack bootstrap --resume
-phone-stack transport configure
-phone-stack transport pair android-bt
-phone-stack doctor --offline
-phone-stack up --offline
-phone-stack bundle export ./stack.phonebundle
-phone-stack bundle import ./stack.phonebundle
-phone-stack update --download-only
-phone-stack update --apply
-phone-stack rollback
+fredo bootstrap plan --from <verified-plan.json> --json
+fredo bootstrap apply --from <verified-plan.json> --resume --json
+fredo doctor --json
+fredo doctor --offline --json
+fredo up --offline --json
 ```
 
-These commands are planned until an implementation and tests land. `phone-stack` is only a neutral CLI placeholder while the project name remains undecided.
+These commands are planned until implementation and tests land.
+
+## Reference profile
+
+`mac-m4pro-24gb` resolves only for:
+
+- macOS `arm64`;
+- Apple Silicon with at least 24 GB RAM;
+- sufficient free disk reported before approval;
+- a working local container runtime when the chosen media path needs it;
+- permission to create a Fredo data root and isolated runtimes.
+
+The reference machine's system Python is 3.14.3. Fredo creates a pinned Python 3.12 environment for components that do not support the system interpreter.
 
 ## State machine
 
 ```text
-DETECTED
-  -> RESOLVED
+PLAN_RECEIVED
+  -> VALIDATED
   -> APPROVED
   -> DOWNLOADING
   -> VERIFIED
-  -> STAGED
+  -> INSTALLED
   -> CONFIGURED
   -> HEALTHY
   -> ACTIVE
 ```
 
-An interrupted bootstrap resumes from its durable journal. It never treats a partial file as verified.
+Every transition is journaled locally. An interrupted bootstrap resumes from verified artifacts and never treats a partial file as complete.
 
-## Resolution
+## Plan validation
 
-`plan` detects and reports:
+Before any write, Fredo checks:
 
-- OS and architecture;
-- RAM, free disk, and available ports;
-- Apple Silicon, CPU-only, or NVIDIA compute;
-- CUDA driver and container-toolkit readiness without installing them silently;
-- selected transport requirements;
-- download sizes and licenses;
-- privileges, firewall changes, and hardware access that require consent.
+- exact supported schema version;
+- allowlisted repository owner and URL;
+- full immutable Git SHA;
+- HTTPS manifest origin;
+- valid SHA-256 format and matching manifest bytes;
+- supported platform/profile pair;
+- expiration time;
+- required disk, ports, binaries and permissions.
 
-Compute and transport resolve separately. For example, `mac-metal + gsm-sip` is valid while `mac-metal + android-bt` is rejected.
+Unknown fields may be preserved for forward compatibility but never interpreted as commands.
 
-## Artifact policy
+## Artifact manifest
 
-- repository sources use immutable commits;
-- OCI images use `repository@sha256:digest`;
-- models use immutable revisions plus SHA-256 and expected size;
-- Python dependencies use a locked offline wheelhouse;
-- release manifests are signed;
-- no `latest`, `curl | sh`, or executable hooks from remote manifests.
+Every downloaded artifact records:
 
-Downloads use `.part` files and resume where supported. A complete digest check happens before atomic activation into a content-addressed cache.
+- stable identifier and role;
+- source URL;
+- immutable revision or digest;
+- expected byte size;
+- SHA-256;
+- declared source/model license;
+- local cache path.
 
-## Activation and rollback
+The hackathon does not require release signing, generalized rollback or air-gap bundles. Checksums and immutable revisions are mandatory.
 
-Each release stages a new runtime generation. The `current` pointer changes only after:
+## Download behavior
 
-- services start;
-- database migrations complete or safely roll back;
-- local inference passes a health check;
-- browser loopback completes STT → LLM → TTS;
-- the selected phone transport passes its own doctor check.
+- use content-addressed cache paths;
+- download to `.part` files;
+- resume ranges when the origin supports them;
+- verify the full digest before activation;
+- never use `latest` or `curl | sh`;
+- never run package lifecycle hooks received from Ginse;
+- record transferred bytes and elapsed time.
 
-The previous generation remains available for rollback.
+## Activation
 
-## Offline guarantee
+The profile becomes `ACTIVE` only after:
 
-`doctor --offline` and `up --offline` block registry and model-hub resolution. Missing artifacts cause a clear error instead of a network fallback.
+- the Fredo plugin is visible to Codex;
+- `fredod` starts and opens its Unix socket;
+- SQLite migrations succeed;
+- local STT, LLM and TTS health checks pass;
+- a loopback voice turn completes;
+- LiveKit/Asterisk checks required by the selected path pass;
+- the configured carrier identity is verified without placing an unconfirmed call.
 
-“Offline” applies to intelligence and local runtime. SIP still needs the internet and GSM still needs the cellular network during a public phone call.
+## Offline contract
 
-## Air-gapped installation
+`doctor --offline` and `up --offline` fail if a model or runtime artifact is missing instead of resolving it from the network.
 
-`bundle export` packages the signed release manifest, pinned OCI content, wheelhouse, and selected models. `bundle import` verifies the same signatures and hashes before staging them on another machine.
+“Offline” applies to Fredo intelligence and runtime. A public phone call still uses SIP/RTP and the carrier network. The hackathon Codex session uses a local OSS provider.
+
+## Measured proof
+
+The bootstrap phase is complete when:
+
+- cold install finishes in at most 30 minutes on the recorded reference network;
+- one deliberately interrupted download resumes;
+- `doctor --json` passes;
+- a second `bootstrap apply` transfers zero artifact bytes;
+- `doctor --offline --json` passes after restart;
+- the exact Fredo Git SHA and artifact manifest digest are reported.

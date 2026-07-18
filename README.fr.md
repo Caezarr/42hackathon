@@ -1,50 +1,88 @@
-# 42hackathon — appels locaux depuis Codex
+# Fredo — le téléphone local de Codex
 
-**Une appliance téléphonique locale pour Codex.**
+**On le découvre dans Ginse. On l'installe sur son Mac. On téléphone depuis Codex.**
 
-Ce projet de hackathon vise à permettre à Codex de passer des appels via l'infrastructure de chaque utilisateur. Les modèles utilisés pendant l'appel, l'audio, les identifiants, les transcriptions et les coûts téléphoniques restent chez lui. Le nom produit reste à choisir : `42hackathon` est le nom du dépôt, pas une marque reprise d'un autre projet.
+Fredo est une capacité téléphonique générique et locale pour Codex. Une fois Fredo installé, une demande devient un appel réel, prévisualisé et confirmé, mené par des modèles tournant chez l'utilisateur, puis un résultat structuré revient dans la même tâche Codex.
 
-Il n'existe ni backend d'appels partagé, ni facture téléphonique centrale.
-
-> On prépare une version épinglée. On connecte son compte SIP ou un bridge pour sa SIM. Les appels suivants ne téléchargent rien implicitement.
+Le moment hackathon est simple : partir de Ginse, installer Fredo localement et faire sonner le vrai téléphone d'un membre du jury depuis un numéro vérifié.
 
 ## État actuel
 
-Le dépôt contient aujourd'hui le contrat produit, l'architecture, les sources épinglées et le plan du hackathon. Les images runtime et les modèles ne sont pas encore verrouillés par digest. Le dialer de bout en bout et les commandes décrites ci-dessous ne sont pas encore implémentés.
+Le dépôt contient le contrat produit, l'architecture cible, les sources épinglées et la roadmap. L'appel de bout en bout n'est **pas encore implémenté**.
 
-## Ce que nous construisons
+- [`GOAL.md`](GOAL.md) définit les critères mesurables de réussite.
+- [`ROADMAP.md`](ROADMAP.md) ordonne le travail et les preuves attendues.
+
+## Parcours
 
 ```text
-Codex
-  -> MCP téléphonique local
-  -> Pipecat + LiveKit
-  -> STT + LLM + TTS locaux
-  -> transport appartenant à l'utilisateur
-     -> navigateur WebRTC
-     -> trunk SIP personnel
-     -> boîtier GSM/LTE avec sa SIM
-     -> Android appairé en Bluetooth via Asterisk
+Ginse
+  -> plan de bootstrap Fredo versionné
+  -> plugin et skill Codex
+  -> CLI et daemon Fredo locaux
+  -> IA vocale locale
+  -> transport SIP de l'utilisateur
+  -> téléphone réel
+  -> résultat dans Codex
 ```
 
-Le premier lancement cible télécharge et vérifie toutes les dépendances du profil choisi. Une fois cette version active, un appel ne déclenche aucun téléchargement implicite. Les mises à jour restent explicites. Le réseau SIP ou cellulaire demeure nécessaire pour joindre le téléphone public.
+Ginse est la porte d'entrée, pas le backend d'appel. Il ne reçoit jamais le numéro, l'objectif de l'appel, les identifiants SIP, l'audio ou la transcription.
 
-## Principes
+La première utilisation se fait en deux temps : une tâche de bootstrap part de Ginse et termine sur `fredo doctor`, puis une nouvelle tâche charge le plugin Fredo et réalise l'appel. Le petit provider HTTPS public de Ginse est obligatoire et hébergé par l'équipe ; il est distinct d'un éventuel edge télécom.
 
-- calcul, données, secrets et historique chez l'utilisateur ;
-- aucun service STT, LLM d'appel ou TTS hébergé obligatoire ;
-- véritable numéro de SIM ou numéro SIP vérifié, jamais de spoofing ;
-- confirmation humaine et politique de destinations ;
-- enregistrement désactivé par défaut ;
-- Ginse optionnel et publié séparément par chaque installation.
+Chaque installation possède ses modèles, ses données, son compte SIP ou sa SIM, son identité d'appelant et sa facture télécom. Fredo n'opère aucune plateforme d'appels mutualisée.
 
-Codex reste une interface hébergée : l'instruction de l'utilisateur et le résultat structuré suivent les règles de service et de confidentialité propres à Codex. Ginse, lorsqu'il est activé, exige aussi que l'opérateur expose un endpoint HTTPS sécurisé ; il ne peut pas appeler `localhost`.
+## Intégration Codex
 
-## Démo cible
+Fredo est distribué comme plugin Codex :
 
-1. Installer la stack sur un laptop ou serveur personnel.
-2. Télécharger les modèles locaux.
-3. Connecter un transport appartenant à l'utilisateur.
-4. Ajouter le MCP local à Codex.
-5. Demander un appel, confirmer, puis recevoir le résultat structuré.
+- une skill pilote le parcours utilisateur ;
+- la CLI `fredo` est le contrat local canonique ;
+- `fredod` gère les appels longs et l'état SQLite ;
+- un adaptateur MCP STDIO peut fournir des outils typés, sans logique métier propre.
 
-Le [`README principal`](README.md) contient l'architecture, la stack, les objectifs du hackathon et les instructions contributeurs.
+La démo utilise Codex CLI avec un fournisseur OSS local. Après bootstrap, aucun fournisseur hébergé de STT, LLM, TTS ou agent vocal n'est nécessaire.
+
+## Machine de référence
+
+Le seul profil obligatoire pendant le hackathon est le Mac inspecté : Apple M4 Pro, 24 Go de RAM, macOS 26.5, architecture `arm64`.
+
+L'inférence tourne nativement via Metal/MLX. Docker Compose peut emballer LiveKit, SIP, Asterisk et l'observabilité. Un edge Linux public n'est ajouté que si le NAT ou l'opérateur le rend nécessaire.
+
+## Stack cible
+
+```text
+Fredo -> SQLite -> Pipecat -> modèles locaux
+      -> LiveKit -> LiveKit SIP -> Asterisk -> trunk SIP -> jury
+```
+
+- Moshi-MLX est un mode full-duplex expérimental.
+- PyVoIP est un outil de diagnostic SIP/RTP.
+- Le clonage vocal est un bonus ; une voix locale générique reste obligatoire.
+
+## Garde-fous
+
+- confirmation explicite à usage unique ;
+- numéro appelant vérifié par l'opérateur ;
+- aucun spoofing ou appel en masse ;
+- blocage des urgences, numéros surtaxés et codes courts ;
+- annonce du caractère automatisé de la voix ;
+- enregistrement désactivé ;
+- logs expurgés et données locales ;
+- un seul appel sortant actif pour la démo.
+
+## Réussite du hackathon
+
+Fredo passe lorsque :
+
+1. l'app Ginse est publiée et vérifiée ;
+2. une tâche de bootstrap récupère le plan Fredo depuis Ginse ;
+3. le Mac installe le runtime local épinglé ;
+4. une nouvelle tâche Codex charge le plugin Fredo ;
+5. Codex affiche puis confirme l'appel ;
+6. le téléphone réel du jury sonne ;
+7. la conversation bidirectionnelle fonctionne avec l'IA locale ;
+8. le résultat revient dans Codex ;
+9. un second appel ne télécharge aucune dépendance.
+
+[Retour au README anglais](README.md)
