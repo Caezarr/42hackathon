@@ -20,6 +20,7 @@ Le projet est documenté de manière autonome, sans reprendre les idées ou la s
 12. [Recherche du travail du coéquipier](./12-recherche-travail-coequipier.md)
 13. [Passage aux commits directs sur main](./13-commits-directs-main.md)
 14. [Comparaison du push du coéquipier et de notre push](./14-comparaison-pushs.md)
+15. [Définition du dialer](./15-definition-dialer.md)
 
 ## Décision actuelle
 
