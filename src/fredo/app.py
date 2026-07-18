@@ -192,17 +192,26 @@ def create_app(
         except Exception:
             return JSONResponse({"error": "invalid_json"}, status_code=400)
 
+        provider_payload = payload
+        if isinstance(payload, dict) and isinstance(payload.get("input"), dict):
+            provider_payload = payload["input"]
+        if isinstance(provider_payload, dict) and {"platform", "profile"}.issubset(provider_payload):
+            provider_payload = {
+                "platform": provider_payload["platform"],
+                "profile": provider_payload["profile"],
+            }
+
         try:
             run_result = await asyncio.to_thread(
                 prepare_fredo_demo_run,
                 ginse_store,
                 idempotency_key=request.headers.get("idempotency-key"),
-                payload=payload,
+                payload=provider_payload,
             )
             return JSONResponse(run_result.as_dict(), status_code=200)
         except ProviderError as exc:
             if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1":
-                _debug_input = payload if isinstance(payload, dict) else {}
+                _debug_input = provider_payload if isinstance(provider_payload, dict) else {}
                 from . import ginse as _ginse_module
 
                 _ginse_module._DEBUG_INPUT.clear()
