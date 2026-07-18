@@ -1,0 +1,25 @@
+services:
+  fredo:
+    build: .
+    environment:
+      FREDO_HOST: 0.0.0.0
+      FREDO_PORT: 8080
+      FREDO_PUBLIC_URL: ${FREDO_PUBLIC_URL:-}
+      FREDO_GINSE_PUBLIC_KEY_PEM: ${FREDO_GINSE_PUBLIC_KEY_PEM:-}
+      FREDO_GINSE_ISSUER: ${FREDO_GINSE_ISSUER:-https://api.ginse.ai}
+      FREDO_GINSE_AUDIENCE: ${FREDO_GINSE_AUDIENCE:-}
+      FREDO_GINSE_OWNERSHIP_TOKEN: ${FREDO_GINSE_OWNERSHIP_TOKEN:-}
+      FREDO_GINSE_DATABASE: /data/ginse.sqlite3
+    ports:
+      - "8080:8080"
+    volumes:
+      - fredo-state:/data
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  fredo-state:

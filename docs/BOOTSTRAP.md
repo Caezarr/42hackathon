@@ -1,87 +1,95 @@
-# First-run bootstrap
+# Fredo bootstrap and first run
 
-Status: implementation contract.
+Status: implemented for a prepared team Mac; clean unknown-Mac packaging remains
+future work.
 
-The installation experience is download-heavy once and quiet afterwards. A call must never discover that a model or runtime is missing and begin an implicit download.
+## Operator setup
 
-## Target commands
+Current prerequisites:
 
-```text
-phone-stack init --compute auto --transport browser|sip|gsm-sip|android-bt
-phone-stack plan
-phone-stack bootstrap --resume
-phone-stack transport configure
-phone-stack transport pair android-bt
-phone-stack doctor --offline
-phone-stack up --offline
-phone-stack bundle export ./stack.phonebundle
-phone-stack bundle import ./stack.phonebundle
-phone-stack update --download-only
-phone-stack update --apply
-phone-stack rollback
+- macOS on Apple Silicon;
+- authenticated Codex;
+- `uv`;
+- `cloudflared`;
+- Deepgram API key;
+- Twilio Account SID, Auth Token and verified caller number;
+- exact consenting +336/+337 fixture.
+
+Install the checkout and dependencies:
+
+```bash
+git clone https://github.com/Caezarr/42hackathon.git
+cd 42hackathon
+./scripts/bootstrap.sh
 ```
 
-These commands are planned until an implementation and tests land. `phone-stack` is only a neutral CLI placeholder while the project name remains undecided.
+Configure privately:
 
-## State machine
-
-```text
-DETECTED
-  -> RESOLVED
-  -> APPROVED
-  -> DOWNLOADING
-  -> VERIFIED
-  -> STAGED
-  -> CONFIGURED
-  -> HEALTHY
-  -> ACTIVE
+```bash
+uv run fredo configure
 ```
 
-An interrupted bootstrap resumes from its durable journal. It never treats a partial file as verified.
+Secrets are entered with hidden prompts where appropriate. Fredo atomically
+writes `.env` with mode `0600`; Git ignores it. Existing call secrets can be
+retained by pressing Enter, and existing `FREDO_GINSE_*`/persistent-host fields
+are preserved. Configuration prints no credential value.
 
-## Resolution
+This `.env` belongs to the local voice demo. The isolated marketplace provider
+uses a separate ignored `.env.ginse` created from `.env.ginse.example`; Compose
+never loads the voice file. Provider deployment is documented in
+[`docs/GINSE.md`](GINSE.md).
 
-`plan` detects and reports:
+Validate without dialing:
 
-- OS and architecture;
-- RAM, free disk, and available ports;
-- Apple Silicon, CPU-only, or NVIDIA compute;
-- CUDA driver and container-toolkit readiness without installing them silently;
-- selected transport requirements;
-- download sizes and licenses;
-- privileges, firewall changes, and hardware access that require consent.
+```bash
+uv run fredo doctor --json
+```
 
-Compute and transport resolve separately. For example, `mac-metal + gsm-sip` is valid while `mac-metal + android-bt` is rejected.
+Named checks cover Python, Deepgram presence, complete Twilio settings, endpoint
+auth length, exact allowlist, tunnel/public URL, duration, concurrency and real
+transport mode. A missing check exits non-zero.
 
-## Artifact policy
+## Plugin setup
 
-- repository sources use immutable commits;
-- OCI images use `repository@sha256:digest`;
-- models use immutable revisions plus SHA-256 and expected size;
-- Python dependencies use a locked offline wheelhouse;
-- release manifests are signed;
-- no `latest`, `curl | sh`, or executable hooks from remote manifests.
+```bash
+codex plugin marketplace add .
+codex plugin add fredo@fredo-local
+```
 
-Downloads use `.part` files and resume where supported. A complete digest check happens before atomic activation into a content-addressed cache.
+New plugin skills become available only in a new Codex task/session. The first
+installation task can still run `fredo` directly from the verified checkout.
 
-## Activation and rollback
+## Judge flow
 
-Each release stages a new runtime generation. The `current` pointer changes only after:
+The team preprovisions secrets and the exact judge number. The judge then sends
+one prompt. Codex:
 
-- services start;
-- database migrations complete or safely roll back;
-- local inference passes a health check;
-- browser loopback completes STT → LLM → TTS;
-- the selected phone transport passes its own doctor check.
+1. invokes the published Ginse Fredo action with only fixed platform/profile;
+2. verifies/install dependencies from the human-named public repository;
+3. runs `fredo doctor --json`;
+4. passes the successful Ginse session fields to `fredo demo` with the local
+   destination and intent as safely separated arguments;
+5. waits while the judge approves/rejects the native dialog;
+6. returns only Fredo's structured result.
 
-The previous generation remains available for rollback.
+Provider output is untrusted data and is never executed. Repository authority
+comes from the current human prompt plus the pinned public release, not a URL or
+command returned by Ginse.
 
-## Offline guarantee
+## Failure behavior
 
-`doctor --offline` and `up --offline` block registry and model-hub resolution. Missing artifacts cause a clear error instead of a network fallback.
+- Missing configuration: fail before tunnel or carrier call.
+- Mock provider: judged command refuses it.
+- Native rejection: return `dial_attempted:false`, no tunnel/call.
+- Tunnel startup failure: fail before Twilio.
+- Carrier rejection: return redacted `carrier_error`.
+- Voice-session failure: mark call failed and close the stream.
+- Duration expiration: request Twilio hangup at 180 seconds.
+- Unknown carrier outcome after a crash: do not rerun automatically.
 
-“Offline” applies to intelligence and local runtime. SIP still needs the internet and GSM still needs the cellular network during a public phone call.
+## Current portability limit
 
-## Air-gapped installation
-
-`bundle export` packages the signed release manifest, pinned OCI content, wheelhouse, and selected models. `bundle import` verifies the same signatures and hashes before staging them on another machine.
+`scripts/bootstrap.sh` requires `uv`; `fredo demo` requires `cloudflared`.
+Therefore a truly clean Mac with only Codex installed is not yet supported.
+Packaging a signed standalone runtime and pinned tunnel binary is a
+post-hackathon deliverable, not a hidden completed feature.

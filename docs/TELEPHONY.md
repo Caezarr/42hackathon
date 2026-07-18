@@ -1,81 +1,108 @@
-# Telephony transports
+# Fredo telephony and media path
 
-The project does not manufacture access to the public phone network. Each operator connects a transport they own.
+Status: Twilio/Deepgram implementation exists; live carrier qualification is
+pending.
 
-## Comparison
+## Why a carrier is unavoidable
 
-| Transport | Public phone calls | External dependency | Status |
-| --- | --- | --- | --- |
-| Browser/WebRTC | No | None on a local network | First development target |
-| User SIP trunk | Yes | Operator's SIP carrier | Primary PSTN target |
-| GSM/LTE-to-SIP | Yes | Operator's SIM and cellular network | Preferred zero-API SIM path |
-| Android Bluetooth | Yes | Operator's Android phone, SIM, Linux, BlueZ | Experimental |
+Deepgram provides voice intelligence, not PSTN termination. Reaching a normal
+phone number requires a carrier account and verified caller identity. The MVP
+uses Twilio. Desktop caller-ID “spoofing” is neither required nor supported.
 
-## Browser/WebRTC
+## Outbound call creation
 
-The browser transport proves the realtime audio and local inference loop without telecom cost. It cannot dial a public phone number.
+Fredo accepts only a request already checked for:
 
-## User-owned SIP
+- structurally valid, unexpired `hosted-voice-mvp` Ginse session fields;
+- canonical E.164;
+- French +336/+337 class;
+- exact local allowlist membership;
+- explicit recipient consent;
+- native confirmation;
+- one active call;
+- required idempotency key.
 
-LiveKit SIP connects to credentials supplied by the operator. Caller identity must be a number the carrier has verified for that account. SIP remains the cleanest production transport.
+The API never accepts a caller-ID or callback URL. `TwilioTelephony` selects the
+configured verified caller number and derives callbacks from
+`FREDO_PUBLIC_URL`.
 
-The reproducible topology depends on the carrier:
+Inline TwiML is generated locally:
 
-- a registered outbound trunk may tolerate NAT, but RTP must still return to the advertised address;
-- a direct SIP peer normally needs a stable public IP or an operator-owned public edge;
-- SIP commonly uses UDP/TCP 5060 or TLS 5061;
-- the planned LiveKit SIP RTP range is UDP 10000–20000;
-- the planned LiveKit RTC media range is separate, for example UDP 50000–60000;
-- HTTPS/WSS and any SIP TLS endpoint need valid certificates;
-- Postgres, Valkey, workers, and inference endpoints are never exposed publicly.
-
-A laptop behind CGNAT may need an operator-owned Linux edge linked to the private machine over WireGuard. The project does not provide a shared edge. The judged hackathon topology uses exactly this model: the reference Mac runs the control and inference path, while one team-owned public Linux edge terminates LiveKit/SIP and connects back over WireGuard.
-
-Reference deployment documentation:
-
-- [LiveKit self-hosting](https://docs.livekit.io/transport/self-hosting/deployment/)
-- [LiveKit SIP server](https://docs.livekit.io/transport/self-hosting/sip-server/)
-
-## GSM/LTE-to-SIP gateway
-
-The operator inserts a SIM into a local gateway that exposes SIP on the LAN:
-
-```text
-LiveKit SIP -> LAN gateway -> operator SIM -> cellular network
+```xml
+<Response>
+  <Connect>
+    <Stream url="wss://PUBLIC/twilio/media">
+      <Parameter name="fredoCallId" value="OPAQUE_UUID" />
+    </Stream>
+  </Connect>
+</Response>
 ```
 
-This removes a cloud telephony API but not the cellular network. The gateway must be isolated from the public internet, use a changed administrator password, and pass codec, DTMF, answer, and hangup tests.
+Twilio receives a 180-second `time_limit` plus status callbacks for initiated,
+ringing, answered and completed states.
 
-When LiveKit SIP and the GSM gateway share the operator's LAN, SIP signaling and RTP stay LAN-only. The gateway itself is the cellular boundary and should not expose an administrator interface to the WAN.
+## Media bridge
 
-## Android Bluetooth bridge
+Twilio sends JSON Media Stream events containing base64 μ-law audio. Fredo:
 
-Asterisk's `chan_mobile` can use a Bluetooth phone as an FXO device and dial through it:
+1. decodes base64;
+2. sends raw μ-law bytes to Deepgram Voice Agent;
+3. receives raw μ-law agent audio;
+4. base64-encodes it into Twilio `media` events.
 
-```text
-LiveKit SIP -> Asterisk -> Dial(Mobile/device/number)
-            -> Bluetooth HFP/SCO -> Android phone -> SIM
-```
+Both sides use 8 kHz mono μ-law, so no transcoder is required. A Deepgram
+`UserStartedSpeaking` event sends Twilio `clear`, which drops queued outbound
+agent audio for barge-in.
 
-Requirements and limitations:
+## Authentication
 
-- Linux and BlueZ;
-- a paired Android phone owned by the operator;
-- direct Bluetooth and D-Bus access;
-- normally one active phone per Bluetooth adapter;
-- narrow-band and device-dependent SCO audio;
-- more fragile reconnection than SIP.
+- `/v1/calls` requires a constant-time bearer comparison with
+  `FREDO_ENDPOINT_SECRET`.
+- Each request requires an 8–200 character `Idempotency-Key`; its server-side
+  fingerprint includes the Ginse handoff, destination and intent.
+- Twilio status callbacks validate `X-Twilio-Signature` against the exact public
+  HTTPS URL and form fields.
+- WebSocket handshakes validate the signature against the public HTTPS/WSS
+  media URL before acceptance.
+- The opaque Fredo call ID and matching Twilio SID must already exist before a
+  media session starts.
 
-This transport should run natively on Linux or on a small user-owned Linux bridge, not inside an ordinary unprivileged container.
+## Call termination
 
-Official Asterisk references:
+The current call ends when:
 
-- [Introduction to the Mobile Channel](https://docs.asterisk.org/Configuration/Channel-Drivers/Mobile-Channel/Introduction-to-the-Mobile-Channel/)
-- [Mobile Channel Features](https://docs.asterisk.org/Configuration/Channel-Drivers/Mobile-Channel/Mobile-Channel-Features/)
-- [Mobile Channel Requirements](https://docs.asterisk.org/Configuration/Channel-Drivers/Mobile-Channel/Mobile-Channel-Requirements/)
+- the callee/Twilio closes the stream, producing failure unless a structured
+  outcome was already captured;
+- Deepgram invokes `finish_demo`; Fredo waits for final agent audio, sends a
+  Twilio `mark`, and hangs up after its playback acknowledgement or a bounded
+  timeout;
+- the 180-second duration task calls Twilio hangup;
+- an operator interrupts the one-shot process.
 
-## Identity and destination policy
+No code requests Twilio recording. Live qualification must also confirm in the
+Twilio console/API that no recording resource was created.
 
-Caller-ID spoofing is not a transport and is outside project scope. The stack presents only the real SIM number or a carrier-verified SIP identity.
+## Failure and status
 
-Every live transport must block emergency, premium-rate, short-code, and prohibited destinations before any side effect. A transport is not ready until a consented test call confirms bidirectional audio, DTMF, hangup, and event reporting.
+Public results hide Twilio SID and show only a masked destination hint. Carrier
+errors are normalized rather than returning raw Twilio exceptions. Transcripts
+are held in local process memory for the current result and are not logged by
+the bridge.
+
+Known gap: registry/idempotency state is not durable. A process crash after
+Twilio accepted a call can leave an unknown outcome. The safe response is no
+automatic retry. A durable commit/reconciliation store is required next.
+
+## Live qualification checklist
+
+- Twilio France geographic permissions enabled;
+- verified non-spoofed caller number;
+- trial disclaimer understood/removed for judging;
+- exact fixture allowlisted and consenting;
+- tunnel URL stable for the call;
+- signed callbacks accepted and forged ones rejected;
+- French greeting intelligible;
+- bidirectional facts and barge-in verified;
+- hard hangup tested;
+- no recording created;
+- five of five controlled calls pass before the jury call.

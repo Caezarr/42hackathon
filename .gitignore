@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.ginse.example
 .upstreams/
 .local-state/
 secrets/

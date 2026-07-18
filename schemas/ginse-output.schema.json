@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prepare Fredo demo output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "product",
+    "profile",
+    "compatible",
+    "demo_session_id",
+    "expires_at"
+  ],
+  "properties": {
+    "product": {
+      "const": "fredo"
+    },
+    "profile": {
+      "const": "hosted-voice-mvp"
+    },
+    "compatible": {
+      "const": true
+    },
+    "demo_session_id": {
+      "type": "string",
+      "pattern": "^demo_[A-Za-z0-9_-]{16,64}$"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

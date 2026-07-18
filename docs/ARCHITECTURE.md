@@ -1,143 +1,133 @@
-# Architecture
+# Fredo architecture — hosted voice MVP
 
-Status: target architecture for the hackathon implementation.
+Status: implemented architecture for `GOAL.md` `0.4-draft`; real call remains
+unqualified until the live gates pass.
 
-## Product boundary
-
-This project distributes software to operators. It is not a shared call platform.
-
-Each installation owns:
-
-- runtime and model execution;
-- database and model cache;
-- phone transport and caller identity;
-- secrets, logs, transcripts, and recordings;
-- limits, destination policy, and telecom costs.
-
-The project may publish source, signed images, manifests, and updates. It does not proxy downstream calls.
-
-## Component map
+## Components
 
 ```mermaid
 flowchart TB
-    subgraph Operator["Operator-owned installation"]
-      C["Codex"] --> MCP["Local phone MCP"]
-      MCP --> API["Local call API / policy"]
-      API --> Q["Durable call jobs"]
-      Q --> W["Pipecat worker"]
-      W --> STT["Local STT"]
-      W --> LLM["Local LLM"]
-      W --> TTS["Local TTS"]
-      W <--> LK["LiveKit"]
-      LK <--> LKSIP["LiveKit SIP"]
-      DB["Postgres"] --- API
-      KV["Valkey"] --- API
-      KV --- W
-    end
-
-    LKSIP --> T1["User SIP trunk"]
-    LKSIP --> T2["LAN GSM/LTE gateway"]
-    LKSIP --> AST["Asterisk / Android Bluetooth"]
-    T1 --> PSTN["Public phone network"]
-    T2 --> PSTN
-    AST --> PSTN
+    CODEX["Codex task + Fredo skill"] --> GINSE["Ginse fixed-price action"]
+    GINSE --> CODEX
+    CODEX --> CLI["fredo CLI"]
+    CLI --> CONFIRM["macOS native DialPreview"]
+    CLI --> TUNNEL["Cloudflare quick tunnel"]
+    CLI --> APP["Local Starlette app"]
+    APP --> TWILIO["Twilio REST + verified caller ID"]
+    TWILIO --> PHONE["Consenting phone"]
+    TWILIO <--> TUNNEL
+    TUNNEL <--> APP
+    APP <--> DEEPGRAM["Deepgram Voice Agent"]
+    APP --> CLI
+    CLI --> CODEX
 ```
 
-## Planes
+## Local runtime
 
-### Control plane
+`fredo demo` owns the complete one-shot lifecycle:
 
-The local control plane owns jobs, confirmation, destination policy, quotas, idempotency, audit, and provider configuration. It never embeds carrier or model credentials in browser code.
+1. load `.env` without logging values;
+2. structurally validate the short-lived Ginse session handoff;
+3. normalize and enforce the local destination/intent policy;
+4. run no-dial readiness checks;
+5. render the full native call preview;
+6. start `cloudflared` and capture its HTTPS origin;
+7. start the Starlette app on loopback;
+8. send one authenticated/idempotent local call request;
+9. wait for a terminal call result;
+10. stop Uvicorn and the tunnel.
 
-### Codex boundary
+The public tunnel exposes Twilio callbacks to the same local app. `/v1/calls`
+remains protected by `FREDO_ENDPOINT_SECRET`; the CLI talks to it on loopback.
+Twilio status and WebSocket handshakes require `X-Twilio-Signature`.
 
-The default integration is a local MCP server. Target tools:
+## Call sequence
 
-- `phone.doctor`
-- `phone.call_start`
-- `phone.call_status`
-- `phone.call_cancel`
-- `phone.call_result`
+```mermaid
+sequenceDiagram
+    participant J as Judge
+    participant C as Codex/Fredo CLI
+    participant A as Local Fredo app
+    participant T as Twilio
+    participant D as Deepgram
+    participant P as Phone
 
-Starting a live call must require confirmation and return a durable operation identifier.
-
-The MCP server and call pipeline are local, but Codex itself is a hosted command interface. The user's request and the structured tool result remain inside Codex's own service boundary; raw live-call audio and the call-side transcript do not need to be sent to Codex.
-
-### Voice plane
-
-Pipecat owns the streaming STT → LLM → TTS pipeline and interruption behavior. LiveKit owns realtime media rooms, browser supervision, and the self-hosted SIP bridge.
-
-### Inference plane
-
-The first vertical slice uses LocalAI as one local OpenAI-compatible gateway. Production-oriented profiles may split into vLLM, Speaches/faster-whisper, and Kokoro without changing the local calling contract.
-
-### Transport plane
-
-Every phone transport implements the same lifecycle:
-
-```text
-configure -> doctor -> dial -> events -> hangup
+    J->>C: One prompt + explicit consent
+    C->>C: Ginse data-only preparation action
+    C-->>J: Native DialPreview
+    J->>C: Click Appeler
+    C->>A: POST /v1/calls + bearer + idempotency key
+    A->>T: Calls.create with fixed caller ID and signed callback URL
+    T->>P: Ring
+    T->>A: Signed WebSocket start + μ-law media
+    A->>D: Voice Agent settings + binary μ-law
+    D->>A: Binary μ-law + events
+    A->>T: Media / clear on barge-in
+    D->>A: finish_demo(works, answer)
+    A->>T: Hangup current call
+    A-->>C: Structured terminal result
+    C-->>J: Answer in same Codex task
 ```
 
-Compute selection and phone transport selection are independent.
+## Voice configuration
 
-## Runtime profiles
+- input/output: μ-law mono, 8 kHz, no transcoding;
+- STT: `flux-general-multi`, version v2, `language_hints=["fr"]`;
+- dialogue: Deepgram-managed `open_ai/gpt-4o-mini` default;
+- TTS: `aura-2-agathe-fr` default;
+- first greeting discloses automated synthetic voice and no recording;
+- only function: `finish_demo(works, answer)`.
 
-### Apple Silicon
+Model names are configuration values but the judged release freezes them.
+Changing a model invalidates live-call evidence.
 
-- UI/API and state services may run in containers.
-- LLM, STT, and TTS should run natively where Metal acceleration is materially better.
-- Containers reach native inference through a restricted local endpoint.
-- Android Bluetooth transport is not supported directly because `chan_mobile` depends on Linux and BlueZ.
+## State and idempotency
 
-### Linux CPU
+The current `CallRegistry` is guarded by one asyncio lock. It records:
 
-- Fully containerized amd64/arm64 target.
-- Quantized local models and low concurrency.
-- Suitable for development and short calls, not fleet-scale throughput.
+- opaque call ID and masked destination hint;
+- normalized purpose;
+- Twilio SID in memory only;
+- state, transcript and structured outcome;
+- `Idempotency-Key -> request fingerprint + call ID`.
 
-### Linux NVIDIA
+Same-key/same-request replay never calls Twilio again in one process. The
+request fingerprint includes destination, purpose and the three Ginse receipt
+fields. Reusing a key with any changed field conflicts. One non-terminal call
+blocks any other request.
 
-- vLLM or LocalAI CUDA for the LLM.
-- Speaches/faster-whisper for STT.
-- Kokoro-compatible local TTS.
-- Explicit GPU reservations and independent health probes.
+This does not survive a process crash. Durable dial commit/reconciliation is
+explicit post-hackathon work and required before at-most-once claims.
 
-## Data and secret ownership
+## Trust and data
 
-The target data root is selected by the operator and survives application upgrades:
+- Ginse sees only fixed platform/profile data.
+- Twilio sees destination, caller ID, metadata and media.
+- Deepgram sees audio, prompt/purpose and conversation context.
+- Codex receives only the local structured result, not provider credentials.
+- Logs intentionally avoid full destinations, transcripts and function arguments.
 
-```text
-<operator-selected-data-root>/
-  config/
-  secrets/
-  manifests/
-  cache/
-  models/
-  runtimes/
-  data/
-  state/
-  run/
-  recordings/
-  backups/
-```
+## Deployment shapes
 
-Generated secrets never enter Git. Recording and hosted telemetry are disabled by default. Logs redact phone numbers and secret-like fields.
+### One-shot team Mac
 
-## Network boundary
+`fredo demo` + quick tunnel. This is the judged path and easiest live-debug path.
 
-Fully local inference does not mean the public phone network is offline.
+### Isolated Ginse provider container
 
-- Browser/WebRTC can remain local.
-- SIP calls require the operator's carrier connection.
-- GSM calls require the cellular network.
-- A Ginse-published instance requires public HTTPS.
-- Postgres, Valkey, inference services, and internal worker endpoints remain private.
+The Dockerfile and compose default to `fredo serve --ginse-only` behind a stable
+HTTPS origin with a persistent `/data` volume. Only health, readiness, manifest
+and `/run` routes exist; no call or Twilio route is registered. Compose maps an
+explicit provider-only allowlist from `.env.ginse` and never loads the voice
+demo's `.env`, Deepgram key or Twilio credentials.
 
-## Non-goals
+### Optional combined persistent voice service
 
-- central multi-tenant call execution;
-- arbitrary caller-ID presentation;
-- automatic bulk dialing;
-- mandatory cloud AI;
-- hiding a remote provider behind the word “local”.
+`fredo serve` exposes both Ginse and voice routes and requires all telephony
+configuration. `FREDO_PUBLIC_URL` must match the signed Twilio callback origin.
+
+### Future dial broker/local voice
+
+The post-hackathon architecture moves master credentials and durable policy to
+a broker issuing short-lived capabilities. A separate `local-voice` profile may
+replace Deepgram after measured Apple Silicon qualification.

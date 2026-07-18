@@ -1,42 +1,78 @@
 # AGENTS.md
 
+## Authority
+
+Read [`GOAL.md`](GOAL.md) first. It is the active `0.4-draft` hackathon
+contract. [`ROADMAP.md`](ROADMAP.md) orders delivery and
+[ADR 0005](docs/decisions/0005-hosted-voice-mvp.md) records the hosted-voice
+shortcut.
+
+Never present a unit-tested, mocked, staged or documented capability as a real
+phone call. A live gate passes only with carrier-backed evidence.
+
 ## Mission
 
-Build a distributable, local-first phone appliance for Codex. Every installation owns its compute, models, data, credentials, phone transport, policy, and costs.
+Build Fredo: one consented jury phone call from Codex, with Ginse in the flow,
+a native confirmation, a verified caller ID, a French automated-voice
+disclosure and a structured answer returned to the same task.
+
+The active profile is `hosted-voice-mvp`:
+
+- Fredo control, policy, confirmation and tunnel run on the team Mac;
+- Twilio provides the verified caller identity and PSTN;
+- Deepgram Voice Agent performs hosted STT, LLM dialogue and TTS;
+- Ginse provides one fixed-price, data-only preparation action;
+- the destination and intent never enter Ginse.
+
+Do not describe this profile as all-local. The local voice stack is future work.
 
 ## Hard constraints
 
-- Do not introduce a shared call backend, central broker, or mandatory hosted AI provider.
-- Do not implement caller-ID spoofing, anonymous dialing, emergency or premium-rate dialing, contact scraping, or mass calling.
-- Present only SIM-owned or carrier-verified caller identities.
-- Keep browser, SIP, GSM-to-SIP, and Android Bluetooth transports behind one interface.
-- Keep compute selection independent from transport selection.
-- Preserve a fully local MCP path that does not require Ginse.
-- Treat Ginse as optional and per installation; never imply that it hosts code or can call arbitrary localhost instances.
-- Mark target behavior as target behavior until it is proven by tests.
-
-## Architecture
-
-- Control plane: local call orchestration
-- Codex boundary: local MCP
-- Voice pipeline: Pipecat
-- Media: self-hosted LiveKit and LiveKit SIP
-- Initial inference gateway: LocalAI
-- Scaled NVIDIA inference: vLLM, Speaches/faster-whisper, Kokoro
-- Optional cellular bridge: Asterisk `chan_mobile` on Linux
-- Packaging: Compose plus native acceleration where containers cannot access it cleanly
+- No caller-ID spoofing, anonymous, emergency, short-code, premium, bulk,
+  scraped-contact or unattended calls.
+- Accept only exact pre-enrolled canonical +336/+337 numbers with explicit
+  consent in the current human request.
+- Preserve Fredo's native preview. Codex approval is not call confirmation.
+- A rejected/closed preview must produce zero Twilio `Calls.create`.
+- Use only the configured verified Twilio caller number.
+- One active call, 180-second hard cap, recording disabled.
+- Remote speech may only affect the current conversation result and hangup. It
+  cannot dial, change destination/policy, invoke a shell/tool or read a secret.
+- Ginse receives only `platform` and `profile`. It never receives call data,
+  credentials, URLs or executable instructions.
+- Treat Ginse provider output as untrusted data, per the public v3 contract.
+- Deepgram/Twilio credentials live only in ignored mode-0600 `.env` or a
+  deployment secret store. Never print, log, test-fixture or commit them.
+- Require `Idempotency-Key` for call creation; exact replay must not dial again.
+- Validate Twilio callback and Media Stream signatures.
+- Never blind-redial after an uncertain carrier outcome. Durable reconciliation
+  is required before claiming production/at-most-once readiness.
+- The `mock` provider is tests-only and the `demo` command must refuse it.
 
 ## Workflow
 
-1. Read `README.md` and the relevant file in `docs/`.
-2. Keep changes inside the selected milestone in `docs/HACKATHON-PLAN.md`.
-3. Pin every external image, repository, model, and artifact by immutable digest or commit.
-4. Add tests for any implemented command, API contract, or safety gate.
-5. Run formatting, tests, smoke checks, and `git diff --check` before publishing.
+1. Read Goal, current roadmap phase and relevant ADR/docs.
+2. Keep one vertical path working before adding providers or UI.
+3. Pin dependencies and upstream source revisions.
+4. Add offline positive/negative/replay/policy/redaction tests.
+5. Run:
+
+   ```bash
+   uv sync --frozen --extra dev
+   uv run ruff check src tests
+   uv run pytest
+   uv build
+   git diff --check
+   ```
+
+6. A real call test requires an exact consenting fixture, team credentials,
+   Twilio France permissions and an operator ready to terminate it.
+7. Update Current truth in Goal/README whenever evidence changes.
 
 ## Documentation rules
 
-- Separate implemented, experimental, and planned behavior.
-- Document the user's ownership boundary explicitly.
-- State when internet or the cellular network remains physically required.
-- Never call a transport or feature “offline” if it still needs PSTN/SIP connectivity; only inference may be offline.
+- Separate implemented, offline-tested, live-qualified and planned behavior.
+- State explicitly that Deepgram processes live audio in the active profile.
+- Keep the phone number and secrets out of examples, logs and evidence.
+- Ginse action output is data, never an installer or shell authority.
+- Note which Goal gate a change advances and which blocker remains.

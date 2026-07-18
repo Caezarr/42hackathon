@@ -1,19 +1,28 @@
 # ADR 0001: Per-user self-hosting
 
-Status: accepted on 2026-07-18.
+Status: accepted as long-term direction on 2026-07-18. Its judged gateway,
+local-inference and Ginse bootstrap mechanism is superseded for the active
+`hosted-voice-mvp` by [ADR 0005](0005-hosted-voice-mvp.md) and
+[`GOAL.md`](../../GOAL.md) `0.4-draft`.
 
 ## Context
 
-The product should let anyone deploy their own instance and run calls with their own compute, models, data, and phone transport.
+The long-term product should let anyone deploy their own instance and run calls with their own compute, models, data, and phone transport. The judged milestone also needs a zero-configuration telecom path for consenting judges who do not yet have carrier credentials.
 
 ## Decision
 
-The stack is distributed as an appliance. The project does not operate a shared call backend or central broker.
+Fredo is distributed as a Codex plugin plus a local runtime. The project does not operate shared inference, dialogue, transcript, or durable call-state infrastructure.
+
+For the judged milestone only, the team operates a server-side SIP policy gateway using its verified carrier account. The gateway is a bounded telecom transport and enforcement boundary, not a shared Fredo intelligence backend. It is the only Fredo component permitted to hold the shared carrier master credential.
+
+After the hackathon, bring-your-own carrier credentials and per-install transport ownership remain the default product direction.
 
 ## Consequences
 
-- GitHub releases and signed OCI artifacts are the distribution channel.
-- Every operator supplies their own SIP account or SIM.
-- Every operator owns storage, retention, quotas, and telecom costs.
-- Local MCP is the default Codex integration.
-- A Ginse listing, when enabled, belongs to one public installation.
+- A Git-backed Codex plugin marketplace and pinned Fredo artifacts are the local distribution channel.
+- Every installation owns local compute, models, call state, transcript storage, and retention.
+- During judging, an installation receives only a short-lived, install-bound gateway capability under team-funded server-side quotas; it never receives the carrier master credential.
+- After the judged milestone, every operator supplies and funds their own SIP account or SIM unless a separately specified managed transport is introduced.
+- The Fredo skill and CLI are the default Codex integration; MCP is an optional adapter.
+- One Ginse app resolves bootstrap plans and may relay an opaque, non-dialing `LeaseClaim`; it never executes or authorizes a user call.
+- Destination, intent, caller identity, audio, transcript, model state, summary, and call result remain outside Ginse and the Fredo provider.

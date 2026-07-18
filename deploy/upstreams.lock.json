@@ -2,7 +2,7 @@
   "schema_version": 1,
   "audited_at": "2026-07-18",
   "policy": {
-    "default_profile": "core",
+    "default_profile": "hosted-voice-mvp",
     "source": "Every repository is checked out at an immutable commit.",
     "runtime": "OCI images and model files require separate immutable digests before release.",
     "licenses": "Source and model licenses must be rechecked before redistribution."
@@ -37,12 +37,12 @@
     },
     {
       "id": "localai",
-      "profiles": ["core", "mac-metal", "linux-cpu"],
-      "role": "Initial local OpenAI-compatible STT, LLM, and TTS gateway",
+      "profiles": ["voice-lab", "linux-cpu"],
+      "role": "Candidate local OpenAI-compatible STT, LLM, and TTS gateway",
       "repository": "https://github.com/mudler/LocalAI.git",
       "revision": "0389495388dd73cd5b3292860fd6d3254dfbb37b",
       "license": "MIT",
-      "required": true
+      "required": false
     },
     {
       "id": "agent-starter-react",
@@ -55,11 +55,20 @@
     },
     {
       "id": "asterisk",
-      "profiles": ["android-bt", "telecom-lab"],
-      "role": "Optional Linux Bluetooth phone/SIM and PBX bridge",
+      "profiles": ["core", "telecom-lab", "android-bt"],
+      "role": "Reference carrier PBX and future Bluetooth phone/SIM bridge",
       "repository": "https://github.com/asterisk/asterisk.git",
       "revision": "ea9b48659d3fb861bd8d6d5b88512d48bf63f8a7",
       "license": "GPL-2.0",
+      "required": true
+    },
+    {
+      "id": "pyvoip",
+      "profiles": ["telecom-lab"],
+      "role": "Pure-Python PCMA/PCMU SIP/RTP diagnostic adapter",
+      "repository": "https://github.com/tayler6000/pyVoIP.git",
+      "revision": "2a693346cb493bc3e7a8c4c820a7c88af6deeb92",
+      "license": "GPL-3.0; keep isolated until redistribution review",
       "required": false
     },
     {
@@ -97,6 +106,15 @@
       "revision": "e6a55d2722a65870ef52a6c9f6ecfc0e90f38362",
       "license": "MIT AND Apache-2.0; model weights CC-BY-4.0",
       "required": false
+    },
+    {
+      "id": "deepgram-voice-agent-outbound-telephony",
+      "profiles": ["hosted-voice-mvp"],
+      "role": "Hosted Deepgram Voice Agent STT/LLM/TTS bridge to Twilio outbound PSTN",
+      "repository": "https://github.com/deepgram-devs/deepgram-voice-agent-outbound-telephony.git",
+      "revision": "e748852e653f6b8f184429d6aa79e7ea2e5007f9",
+      "license": "MIT",
+      "required": true
     }
   ]
 }

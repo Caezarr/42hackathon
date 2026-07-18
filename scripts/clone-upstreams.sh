@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOCK_FILE="$PROJECT_DIR/deploy/upstreams.lock.json"
-PROFILE="${1:-core}"
+PROFILE="${1:-hosted-voice-mvp}"
 TARGET_DIR="${2:-$PROJECT_DIR/.upstreams}"
 
 if ! command -v jq >/dev/null 2>&1; then
@@ -38,11 +38,20 @@ clone_pinned() {
 
 # These are development source bundles, not end-user runtime profiles.
 case "$PROFILE" in
+  hosted-voice-mvp)
+    JQ_FILTER='select(.profiles | index("hosted-voice-mvp"))'
+    ;;
   core)
     JQ_FILTER='select(.profiles | index("core"))'
     ;;
   android-bt)
     JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("android-bt")))'
+    ;;
+  telecom-lab)
+    JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("telecom-lab")))'
+    ;;
+  voice-lab)
+    JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("voice-lab")) or (.profiles | index("wow-lab")))'
     ;;
   linux-nvidia)
     JQ_FILTER='select((.profiles | index("core")) or (.profiles | index("linux-nvidia")))'
@@ -51,7 +60,7 @@ case "$PROFILE" in
     JQ_FILTER='.'
     ;;
   *)
-    printf 'Unknown source bundle %s. Use core, android-bt, linux-nvidia, or all.\n' "$PROFILE" >&2
+    printf 'Unknown source bundle %s. Use hosted-voice-mvp, core, telecom-lab, voice-lab, android-bt, linux-nvidia, or all.\n' "$PROFILE" >&2
     exit 1
     ;;
 esac
