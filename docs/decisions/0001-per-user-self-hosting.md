@@ -4,11 +4,11 @@ Status: accepted on 2026-07-18.
 
 ## Context
 
-The product should let anyone deploy an Agent Call instance and run calls with their own compute, models, data, and phone transport.
+The product should let anyone deploy their own instance and run calls with their own compute, models, data, and phone transport.
 
 ## Decision
 
-Agent Call is distributed as an appliance. The project does not operate a shared call backend or central broker.
+The stack is distributed as an appliance. The project does not operate a shared call backend or central broker.
 
 ## Consequences
 

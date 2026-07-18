@@ -4,7 +4,7 @@ Status: target architecture for the hackathon implementation.
 
 ## Product boundary
 
-Agent Call is software distributed to operators. It is not a shared call platform.
+This project distributes software to operators. It is not a shared call platform.
 
 Each installation owns:
 
@@ -21,8 +21,8 @@ The project may publish source, signed images, manifests, and updates. It does n
 ```mermaid
 flowchart TB
     subgraph Operator["Operator-owned installation"]
-      C["Codex"] --> MCP["Agent Call MCP"]
-      MCP --> API["Agent Call API / policy"]
+      C["Codex"] --> MCP["Local phone MCP"]
+      MCP --> API["Local call API / policy"]
       API --> Q["Durable call jobs"]
       Q --> W["Pipecat worker"]
       W --> STT["Local STT"]
@@ -47,17 +47,17 @@ flowchart TB
 
 ### Control plane
 
-Agent Call owns jobs, confirmation, destination policy, quotas, idempotency, audit, and provider configuration. It never embeds carrier or model credentials in browser code.
+The local control plane owns jobs, confirmation, destination policy, quotas, idempotency, audit, and provider configuration. It never embeds carrier or model credentials in browser code.
 
 ### Codex boundary
 
 The default integration is a local MCP server. Target tools:
 
-- `agent_call.doctor`
-- `agent_call.call_start`
-- `agent_call.call_status`
-- `agent_call.call_cancel`
-- `agent_call.call_result`
+- `phone.doctor`
+- `phone.call_start`
+- `phone.call_status`
+- `phone.call_cancel`
+- `phone.call_result`
 
 Starting a live call must require confirmation and return a durable operation identifier.
 
@@ -69,7 +69,7 @@ Pipecat owns the streaming STT → LLM → TTS pipeline and interruption behavio
 
 ### Inference plane
 
-The first vertical slice uses LocalAI as one local OpenAI-compatible gateway. Production-oriented profiles may split into vLLM, Speaches/faster-whisper, and Kokoro without changing the Agent Call contract.
+The first vertical slice uses LocalAI as one local OpenAI-compatible gateway. Production-oriented profiles may split into vLLM, Speaches/faster-whisper, and Kokoro without changing the local calling contract.
 
 ### Transport plane
 
@@ -108,7 +108,7 @@ Compute selection and phone transport selection are independent.
 The target data root is selected by the operator and survives application upgrades:
 
 ```text
-agent-call-home/
+<operator-selected-data-root>/
   config/
   secrets/
   manifests/

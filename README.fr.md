@@ -1,8 +1,8 @@
-# Agent Call — 42hackathon
+# 42hackathon — appels locaux depuis Codex
 
 **Une appliance téléphonique locale pour Codex.**
 
-Agent Call vise à permettre à Codex de passer des appels via l'infrastructure de chaque utilisateur. Les modèles utilisés pendant l'appel, l'audio, les identifiants, les transcriptions et les coûts téléphoniques restent chez lui.
+Ce projet de hackathon vise à permettre à Codex de passer des appels via l'infrastructure de chaque utilisateur. Les modèles utilisés pendant l'appel, l'audio, les identifiants, les transcriptions et les coûts téléphoniques restent chez lui. Le nom produit reste à choisir : `42hackathon` est le nom du dépôt, pas une marque reprise d'un autre projet.
 
 Il n'existe ni backend d'appels partagé, ni facture téléphonique centrale.
 
@@ -16,7 +16,7 @@ Le dépôt contient aujourd'hui le contrat produit, l'architecture, les sources 
 
 ```text
 Codex
-  -> MCP Agent Call local
+  -> MCP téléphonique local
   -> Pipecat + LiveKit
   -> STT + LLM + TTS locaux
   -> transport appartenant à l'utilisateur
@@ -41,7 +41,7 @@ Codex reste une interface hébergée : l'instruction de l'utilisateur et le rés
 
 ## Démo cible
 
-1. Installer Agent Call sur un laptop ou serveur personnel.
+1. Installer la stack sur un laptop ou serveur personnel.
 2. Télécharger les modèles locaux.
 3. Connecter un transport appartenant à l'utilisateur.
 4. Ajouter le MCP local à Codex.

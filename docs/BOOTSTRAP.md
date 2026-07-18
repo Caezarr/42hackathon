@@ -7,21 +7,21 @@ The installation experience is download-heavy once and quiet afterwards. A call 
 ## Target commands
 
 ```text
-agent-call init --compute auto --transport browser|sip|gsm-sip|android-bt
-agent-call plan
-agent-call bootstrap --resume
-agent-call transport configure
-agent-call transport pair android-bt
-agent-call doctor --offline
-agent-call up --offline
-agent-call bundle export ./stack.acb
-agent-call bundle import ./stack.acb
-agent-call update --download-only
-agent-call update --apply
-agent-call rollback
+phone-stack init --compute auto --transport browser|sip|gsm-sip|android-bt
+phone-stack plan
+phone-stack bootstrap --resume
+phone-stack transport configure
+phone-stack transport pair android-bt
+phone-stack doctor --offline
+phone-stack up --offline
+phone-stack bundle export ./stack.phonebundle
+phone-stack bundle import ./stack.phonebundle
+phone-stack update --download-only
+phone-stack update --apply
+phone-stack rollback
 ```
 
-These commands are planned until an implementation and tests land.
+These commands are planned until an implementation and tests land. `phone-stack` is only a neutral CLI placeholder while the project name remains undecided.
 
 ## State machine
 

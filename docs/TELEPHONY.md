@@ -1,6 +1,6 @@
 # Telephony transports
 
-Agent Call does not manufacture access to the public phone network. Each operator connects a transport they own.
+The project does not manufacture access to the public phone network. Each operator connects a transport they own.
 
 ## Comparison
 
@@ -76,6 +76,6 @@ Official Asterisk references:
 
 ## Identity and destination policy
 
-Caller-ID spoofing is not a transport and is outside project scope. Agent Call presents only the real SIM number or a carrier-verified SIP identity.
+Caller-ID spoofing is not a transport and is outside project scope. The stack presents only the real SIM number or a carrier-verified SIP identity.
 
 Every live transport must block emergency, premium-rate, short-code, and prohibited destinations before any side effect. A transport is not ready until a consented test call confirms bidirectional audio, DTMF, hangup, and event reporting.

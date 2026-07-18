@@ -1,6 +1,6 @@
 # Ginse integration
 
-Ginse is an optional marketplace and invocation layer for self-hosted operators, but it is required for the team's hackathon demo. It does not host Agent Call, install containers, or call a user's `localhost`.
+Ginse is an optional marketplace and invocation layer for self-hosted operators, but it is required for the team's hackathon demo. It does not host the local stack, install containers, or call a user's `localhost`.
 
 Canonical references:
 
@@ -11,7 +11,7 @@ Canonical references:
 
 A published Ginse app version has one fixed public HTTPS `run_url`. One universal listing therefore cannot invoke many unrelated local installations without a central broker.
 
-Agent Call deliberately has no central broker.
+The project deliberately has no central broker.
 
 ## Supported model
 
@@ -20,7 +20,7 @@ Every operator who wants Ginse publishes their own installation:
 ```text
 operator-owned Ginse listing
   -> operator-owned HTTPS /run
-  -> operator-owned Agent Call appliance
+  -> operator-owned calling appliance
   -> operator-owned SIP or SIM transport
 ```
 

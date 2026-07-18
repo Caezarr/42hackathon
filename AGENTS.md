@@ -17,7 +17,7 @@ Build a distributable, local-first phone appliance for Codex. Every installation
 
 ## Architecture
 
-- Control plane: Agent Call
+- Control plane: local call orchestration
 - Codex boundary: local MCP
 - Voice pipeline: Pipecat
 - Media: self-hosted LiveKit and LiveKit SIP

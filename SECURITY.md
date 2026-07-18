@@ -1,6 +1,6 @@
 # Security and abuse boundaries
 
-Agent Call touches phone numbers, audio, credentials, and public telecom networks. Safety gates are product requirements, not optional polish.
+This project touches phone numbers, audio, credentials, and public telecom networks. Safety gates are product requirements, not optional polish.
 
 ## Prohibited product behavior
 

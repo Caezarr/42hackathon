@@ -8,7 +8,7 @@ Some desktop calling services market arbitrary caller-ID presentation as “spoo
 
 ## Decision
 
-Agent Call supports only caller identities owned by the operator's SIM or verified by the operator's SIP carrier.
+The stack supports only caller identities owned by the operator's SIM or verified by the operator's SIP carrier.
 
 ## Consequences
 

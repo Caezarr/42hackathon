@@ -1,8 +1,8 @@
-# Agent Call — 42hackathon
+# 42hackathon — local phone calls from Codex
 
 **A local-first phone appliance for Codex.**
 
-Agent Call is being built to let Codex place phone calls through infrastructure owned by the user. Live-call models, audio processing, credentials, transcripts, call history, and telecom costs stay with each installation.
+This hackathon project is being built to let Codex place phone calls through infrastructure owned by the user. Live-call models, audio processing, credentials, transcripts, call history, and telecom costs stay with each installation. The product name is still open; `42hackathon` is the repository name, not a recycled brand from another project.
 
 There is no shared calling backend and no central phone bill.
 
@@ -18,8 +18,8 @@ This repository currently defines the hackathon product, architecture, source de
 
 ```mermaid
 flowchart LR
-    C["Codex"] --> M["Local Agent Call MCP"]
-    M --> A["Agent Call control plane"]
+    C["Codex"] --> M["Local phone MCP"]
+    M --> A["Local call control plane"]
     A --> P["Pipecat voice worker"]
     P --> STT["Local STT"]
     P --> LLM["Local LLM"]
@@ -47,17 +47,17 @@ The AI pipeline, media control plane, and data storage can run locally. The sele
 
 ## Target experience
 
-The target first run downloads and verifies the selected appliance profile:
+The target first run downloads and verifies the selected appliance profile. `phone-stack` is a descriptive placeholder for the unimplemented CLI, not the product name:
 
 ```bash
 git clone https://github.com/Caezarr/42hackathon.git
 cd 42hackathon
 
-agent-call init --compute auto --transport browser
-agent-call plan
-agent-call bootstrap --resume
-agent-call doctor --offline
-agent-call up --offline
+phone-stack init --compute auto --transport browser
+phone-stack plan
+phone-stack bootstrap --resume
+phone-stack doctor --offline
+phone-stack up --offline
 ```
 
 The bootstrap caches pinned containers, models, and runtime dependencies. Once a selected release and profile reach `ACTIVE`, placing a call never triggers an implicit dependency download. Updates and profile changes remain explicit downloads.
@@ -79,10 +79,10 @@ Compute and telephony are independent choices:
 
 ## Demo flow
 
-1. Install Agent Call on a laptop or user-owned server.
+1. Install the stack on a laptop or user-owned server.
 2. Bootstrap the local models and media services.
 3. Connect a browser, personal SIP trunk, or SIM bridge.
-4. Add the local Agent Call MCP server to Codex.
+4. Add the local phone MCP server to Codex.
 5. Ask: **“Call this allowed contact, explain the appointment change, then summarize the answer.”**
 6. Confirm the destination and call intent.
 7. The local agent places the call and returns a structured result.
@@ -92,7 +92,7 @@ No hosted STT, call-side LLM, or TTS API is required in the live-call pipeline. 
 ## Proposed stack
 
 - **Codex MCP** — local tool boundary and human confirmation
-- **Agent Call** — jobs, policy, quotas, audit, and transport control
+- **Local call control** — jobs, policy, quotas, audit, and transport control
 - **Pipecat** — conversational voice pipeline
 - **LiveKit + LiveKit SIP** — self-hosted realtime media and SIP bridge
 - **LocalAI initially** — one local OpenAI-compatible STT/LLM/TTS gateway
@@ -106,13 +106,13 @@ The selected and pinned repositories, commits, and recorded license identifiers 
 
 [Ginse](https://app.ginse.ai/) is optional for self-hosted operators and required for the team's hackathon demo. It neither hosts nor distributes this appliance.
 
-A published Ginse app has one fixed HTTPS `run_url`. Therefore each operator who wants Ginse publishes their own secured, publicly reachable Agent Call endpoint. Ginse cannot invoke `localhost`; MCP-only operation stays private and local. There is deliberately no universal broker routing everybody's calls through us.
+A published Ginse app has one fixed HTTPS `run_url`. Therefore each operator who wants Ginse publishes their own secured, publicly reachable calling endpoint. Ginse cannot invoke `localhost`; MCP-only operation stays private and local. There is deliberately no universal broker routing everybody's calls through us.
 
 See [`docs/GINSE.md`](docs/GINSE.md).
 
 ## Safety by construction
 
-Agent Call is not a caller-ID spoofing or bulk-dialing product.
+This project is not a caller-ID spoofing or bulk-dialing product.
 
 The appliance is designed to enforce:
 
@@ -195,6 +195,6 @@ Optional development source bundles are `android-bt`, `linux-nvidia`, and `all`;
 
 AI phone agents should behave like software you own, not another call platform you rent.
 
-Agent Call turns a laptop, workstation, or home server into a private voice appliance: live-call inference and phone data stay local, the telephone connection belongs to the user, and Codex provides the hosted command interface.
+The project turns a laptop, workstation, or home server into a private voice appliance: live-call inference and phone data stay local, the telephone connection belongs to the user, and Codex provides the hosted command interface.
 
 Licensed under the [Apache License 2.0](LICENSE). Third-party source and model licenses remain their own and are tracked separately.

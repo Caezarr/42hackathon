@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping build Agent Call during the hackathon.
+Thanks for helping build this local Codex telephony stack during the hackathon.
 
 ## Before starting
 
