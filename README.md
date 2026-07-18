@@ -14,6 +14,8 @@ This repository currently contains the product contract, target architecture, so
 
 The measurable completion contract is [`GOAL.md`](GOAL.md). The ordered implementation plan is [`ROADMAP.md`](ROADMAP.md).
 
+A standalone [local voice-cloning proof of concept](voice-clone-poc/README.md) tests WAV reference audio and French phrase generation with Chatterbox Multilingual V3.
+
 ## Product flow
 
 ```mermaid

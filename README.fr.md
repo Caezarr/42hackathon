@@ -13,6 +13,8 @@ Le dépôt contient le contrat produit, l'architecture cible, les sources éping
 - [`GOAL.md`](GOAL.md) définit les critères mesurables de réussite.
 - [`ROADMAP.md`](ROADMAP.md) ordonne le travail et les preuves attendues.
 
+Un [POC autonome de clonage vocal local](voice-clone-poc/README.md) permet de tester séparément un échantillon WAV et la génération d'une phrase française avec Chatterbox Multilingual V3.
+
 ## Parcours
 
 ```text
