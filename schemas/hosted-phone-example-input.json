@@ -1,0 +1,7 @@
+{
+  "profile": "hosted-phone",
+  "caller_identity": "Gab",
+  "destination_phone": "+33612345678",
+  "call_goal": "Ask whether they can speak briefly about Ginse",
+  "consent_confirmed": true
+}

@@ -10,6 +10,7 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
+COPY schemas ./schemas
 RUN pip install --no-cache-dir uv==0.10.9 \
     && uv sync --frozen --no-dev --no-editable \
     && mkdir /data \
@@ -22,4 +23,4 @@ ENV FREDO_STATE_DIR=/data \
 USER fredo
 EXPOSE 8080
 VOLUME ["/data"]
-CMD ["fredo", "serve", "--ginse-only"]
+CMD ["fredo", "serve"]

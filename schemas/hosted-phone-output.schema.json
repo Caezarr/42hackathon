@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fredo hosted phone task output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["product", "profile", "call_id", "status"],
+  "properties": {
+    "product": {"const": "fredo"},
+    "profile": {"const": "hosted-phone"},
+    "call_id": {"type": "string", "format": "uuid"},
+    "status": {"enum": ["dialing", "ringing", "connected", "completed", "failed"]}
+  }
+}

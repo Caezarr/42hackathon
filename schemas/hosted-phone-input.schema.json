@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fredo hosted phone task input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "caller_identity", "destination_phone", "call_goal", "consent_confirmed"],
+  "properties": {
+    "profile": {"const": "hosted-phone"},
+    "caller_identity": {"type": "string", "minLength": 1, "maxLength": 120},
+    "destination_phone": {"type": "string", "pattern": "^\\+[1-9][0-9]{7,14}$"},
+    "call_goal": {"type": "string", "minLength": 1, "maxLength": 500},
+    "consent_confirmed": {"const": true}
+  }
+}
