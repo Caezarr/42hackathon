@@ -17,6 +17,7 @@ Le projet est documenté de manière autonome, sans reprendre les idées ou la s
 9. [Compréhension actuelle du projet](./09-comprehension-actuelle.md)
 10. [Codex CLI local et appel réel du jury](./10-codex-cli-appel-jury.md)
 11. [Push Git après chaque modification](./11-push-apres-chaque-modification.md)
+12. [Recherche du travail du coéquipier](./12-recherche-travail-coequipier.md)
 
 ## Décision actuelle
 
