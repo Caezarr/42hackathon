@@ -1,6 +1,6 @@
 # Ginse integration
 
-Ginse is an optional marketplace and invocation layer. It does not host Agent Call, install containers, or call a user's `localhost`.
+Ginse is an optional marketplace and invocation layer for self-hosted operators, but it is required for the team's hackathon demo. It does not host Agent Call, install containers, or call a user's `localhost`.
 
 Canonical references:
 
@@ -15,7 +15,7 @@ Agent Call deliberately has no central broker.
 
 ## Supported model
 
-Every operator may publish their own installation:
+Every operator who wants Ginse publishes their own installation:
 
 ```text
 operator-owned Ginse listing
@@ -26,7 +26,7 @@ operator-owned Ginse listing
 
 Users who want a fully local workflow use the MCP server and skip Ginse entirely.
 
-For hackathon judging, the team may expose one clearly labelled demo installation. That is a demonstration endpoint, not the product architecture.
+For hackathon judging, the team will expose one clearly labelled demo installation. That is a required demonstration endpoint, not the product architecture.
 
 ## One marketplace action
 

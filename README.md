@@ -104,7 +104,7 @@ The selected and pinned repositories, commits, and recorded license identifiers 
 
 ## Ginse
 
-[Ginse](https://app.ginse.ai/) is optional. It neither hosts nor distributes this appliance.
+[Ginse](https://app.ginse.ai/) is optional for self-hosted operators and required for the team's hackathon demo. It neither hosts nor distributes this appliance.
 
 A published Ginse app has one fixed HTTPS `run_url`. Therefore each operator who wants Ginse publishes their own secured, publicly reachable Agent Call endpoint. Ginse cannot invoke `localhost`; MCP-only operation stays private and local. There is deliberately no universal broker routing everybody's calls through us.
 

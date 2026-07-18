@@ -25,7 +25,7 @@ The bootstrap release budget is at most 20 GB of compressed downloads for the re
 Required on the reference machine:
 
 - current macOS on Apple Silicon;
-- Docker Desktop for containerized state and media services;
+- Docker Desktop for containerized state services on the Mac; LiveKit, LiveKit SIP, and the public HTTPS endpoint run on the Linux edge;
 - enough internet access for the explicit first-run downloads;
 - an operator-owned public Linux edge connected to the Mac over WireGuard;
 - a controlled SIP test account, verified caller number, domain, and TLS certificates;
@@ -104,7 +104,7 @@ Exit evidence: one controlled number receives a call from the verified operator 
 
 Exit evidence: Codex starts a confirmed call through MCP, polls its durable operation, can cancel it, and reads the terminal result without receiving raw call audio.
 
-### P5 — Packaging and optional Ginse demo
+### P5 — Packaging and Ginse demo
 
 - [ ] Reproducible Compose bundle
 - [ ] Clean-machine installation guide
