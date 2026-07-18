@@ -6,7 +6,7 @@ services:
     region: frankfurt
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /health
+    healthCheckPath: /healthz
     autoDeployTrigger: checksPass
     envVars:
       - key: FREDO_HOST

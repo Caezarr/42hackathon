@@ -138,7 +138,8 @@ create a new Blueprint from `Caezarr/42hackathon`, choose the `render.yaml`
 file, and use the generated `onrender.com` URL as `FREDO_PUBLIC_URL`. Fill the
 four `sync: false` Ginse variables from the official Ginse bootstrap, then
 redeploy. The Blueprint uses the existing Docker image, `/health` check and a
-1 GB persistent disk for the Ginse idempotency database. Render persistent
+1 GB persistent disk for the Ginse idempotency database. The service health
+check is `/healthz`. Render persistent
 disks require a paid web-service plan.
 
 ## Commands
