@@ -3,14 +3,15 @@ from __future__ import annotations
 from .settings import Settings
 
 
-def build_system_prompt(intent: str) -> str:
+def build_system_prompt(intent: str, language: str = "en") -> str:
+    language_name = "French" if language == "fr" else "English"
     return f"""You are Fredo, a synthetic voice assistant for a consented demonstration.
 
 CALL OBJECTIVE
 {intent}
 
 ABSOLUTE RULES
-- Speak English, using short and natural sentences.
+- Speak {language_name}, using short and natural sentences. Do not switch languages unless the person explicitly asks.
 - Your first substantive information must be that you are an automated synthetic voice.
 - Say that the call is not recorded.
 - Complete the call objective and verify the key details with the person.
@@ -67,19 +68,21 @@ def build_agent_settings(settings: Settings, intent: str):
         },
     )
 
+    language = "fr" if intent.startswith("[language=fr]") else "en"
+    clean_intent = intent.removeprefix("[language=fr]").strip()
     if settings.listen_model.startswith("flux-"):
         listen_provider = AgentV1SettingsAgentListenProvider_V2(
             version="v2",
             type="deepgram",
             model=settings.listen_model,
-            language_hints=[settings.listen_language],
+            language_hints=[language],
         )
     else:
         listen_provider = AgentV1SettingsAgentListenProvider_V1(
             version="v1",
             type="deepgram",
             model=settings.listen_model,
-            language=settings.listen_language,
+            language=language,
         )
 
     return AgentV1Settings(
@@ -99,7 +102,7 @@ def build_agent_settings(settings: Settings, intent: str):
                     type=settings.llm_provider,
                     model=settings.llm_model,
                 ),
-                prompt=build_system_prompt(intent),
+                prompt=build_system_prompt(clean_intent, language),
                 functions=[finish_demo],
             ),
             speak=SpeakSettingsV1(
@@ -109,9 +112,13 @@ def build_agent_settings(settings: Settings, intent: str):
                 )
             ),
             greeting=(
-                "Hello, I am Fredo, an automated synthetic voice. "
-                "This call is not recorded. "
-                f"I am calling about this request: {intent}."
+                ("Bonjour, je suis Fredo, une voix synthétique automatisée. "
+                 "Cet appel n'est pas enregistré. "
+                 f"J'appelle au sujet de cette demande : {clean_intent}.")
+                if language == "fr"
+                else ("Hello, I am Fredo, an automated synthetic voice. "
+                      "This call is not recorded. "
+                      f"I am calling about this request: {clean_intent}.")
             ),
         ),
     )

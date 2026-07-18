@@ -250,9 +250,12 @@ def create_app(
                     raise HostedRequestError("consent_required", "consent_confirmed must be true", 422)
                 if len(goal.strip()) > 500:
                     raise HostedRequestError("invalid_input", "call_goal is too long", 422)
+                normalized_goal = " ".join(goal.split())
+                french_markers = (" français", " francaise", " française", " en français", " bonjour", " réservation", " demander", " demande", " est-ce", " peux-tu", " tu ")
+                language_prefix = "[language=fr]" if any(marker in normalized_goal.lower() for marker in french_markers) else ""
                 hosted_request = CallRequest(
                     to=destination,
-                    intent=f"Caller {identity.strip()} asks you to: {' '.join(goal.split())}",
+                    intent=f"{language_prefix}Caller {identity.strip()} asks you to: {normalized_goal}",
                     consent=True,
                     confirmed=True,
                     profile="hosted-phone",
