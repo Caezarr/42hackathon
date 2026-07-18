@@ -1,6 +1,9 @@
 # ADR 0004: One-prompt bootstrap and judged demo access
 
-Status: accepted on 2026-07-18; amends [ADR 0001](0001-per-user-self-hosting.md) and [ADR 0003](0003-fredo-hackathon-contract.md).
+Status: superseded on 2026-07-18 for the active `hosted-voice-mvp` by
+[ADR 0005](0005-hosted-voice-mvp.md) and [`GOAL.md`](../../GOAL.md)
+`0.4-draft`. The one-prompt experience remains a goal; the signed bootstrap,
+lease redemption and policy-gateway mechanism below is deferred.
 
 ## Context
 

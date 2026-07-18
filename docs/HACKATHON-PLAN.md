@@ -8,12 +8,12 @@ The measurable completion contract is [`../GOAL.md`](../GOAL.md).
 
 ```text
 one judge prompt with <PHONE_E164>
-  -> Ginse bootstrap action
-  -> Codex installs the signed Fredo candidate locally
-  -> Fredo redeems bounded demo access
-  -> local voice loop passes doctor
-  -> native preview and one-use confirmation
-  -> policy-gateway-enforced SIP call
+  -> Ginse EUR 0.42 Prepare Fredo demo action
+  -> Codex validates its typed short-lived session output
+  -> prepared Fredo checkout passes doctor
+  -> native preview and explicit confirmation
+  -> verified Twilio outbound call
+  -> local Media Stream bridge to hosted Deepgram Voice Agent
   -> judge phone rings
   -> result returns to Codex
   -> fresh session verifies the installed plugin
@@ -23,15 +23,15 @@ one judge prompt with <PHONE_E164>
 ## Never cut
 
 - Ginse in the visible user journey;
-- local runtime on the reference M4 Pro Mac;
+- local Fredo control runtime on Apple Silicon macOS;
 - real judge phone call;
-- local voice inference;
+- honest hosted Deepgram STT/LLM/TTS disclosure;
 - explicit confirmation;
 - verified caller identity;
 - bidirectional audio;
-- structured result in Codex.
-- server-side spend, destination, rate, duration and revocation controls;
-- signed release assets, provenance and evidence linking tested bytes to published bytes.
+- exact local destination allowlist and 180-second cap;
+- structured result in Codex;
+- evidence linking the tested Git commit to the published Ginse version.
 
 ## First features to cut
 
@@ -39,5 +39,5 @@ one judge prompt with <PHONE_E164>
 - Moshi mode;
 - custom dashboard;
 - multiple transports and machines;
-- production rollback and air-gap support;
+- clean-machine bundling, production rollback and air-gap support;
 - BYOK and general-purpose carrier onboarding.

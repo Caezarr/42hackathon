@@ -1,173 +1,196 @@
 # Ginse contract for Fredo
 
-Status: implementation contract subordinate to [`GOAL.md`](../GOAL.md) `0.3-draft`; not implemented yet.
+Status: implemented provider contract for [`GOAL.md`](../GOAL.md)
+`hosted-voice-mvp`; deployment, verification and publication are still pending.
 
-Ginse is the mandatory hackathon discovery and bootstrap front door. It invokes exactly one fixed-price Fredo action. It does not place calls, route media, install files, or receive call data.
+Ginse is Fredo's mandatory catalog, test-payment and invocation layer. It runs
+one fixed-price preparation action before a judged call. It never places a
+call, receives the destination, handles audio or returns executable
+instructions.
 
-The judged prompt is:
+Canonical references:
 
-> “Use Ginse to prepare Fredo, then call `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in French, disclose immediately that you are an automated synthetic voice, ask whether the demonstration works, then return the answer here.”
+- [Use Ginse from an agent](https://app.ginse.ai/agent.md)
+- [Ginse v3 provider contract](https://app.ginse.ai/contracts/v3/README.md)
 
-`<PHONE_E164>` stays in the Codex task and local Fredo runtime. It MUST NOT appear in a Ginse request or response.
+## Marketplace offer
 
-Canonical Ginse references:
+```text
+Mac demo profile -> Prepare Fredo demo -> Fredo demo session
+```
 
-- [Use Ginse from Codex](https://app.ginse.ai/agent.md)
-- [Ginse v3 provider contracts](https://app.ginse.ai/contracts/v3/README.md)
+| Field | Value |
+| --- | --- |
+| Display name | `Fredo — 42hackathon` |
+| Slug | `fredo-demo` |
+| Fixed test price | EUR 0.42 |
+| Manifest | `GET /.well-known/ginse.json` |
+| Action | `POST /run` |
 
-## Single marketplace action
+The manifest uses Ginse manifest `schema_version: "2"` and is constructed from
+the same schemas exercised by the provider tests.
 
-- Display name: `Fredo — 42hackathon`.
-- Action: `Resolve a Fredo demo bootstrap`.
-- Proposed fake-ledger price: EUR 0.42.
-- Transport: one self-hosted HTTPS `/run` action.
+## Closed request and response
 
-Calling, status, cancellation, and result retrieval are local Fredo operations, never additional Ginse products.
-
-## Request
-
-The `BootstrapRequest` contains exactly the bootstrap selectors, an installation identifier generated inside the trusted Ginse shim from 128 CSPRNG bits, and the thumbprint of a protected device signing key created locally before `/run`. The ID is encoded as exactly 22 unpadded base64url characters; the SHA-256 thumbprint as exactly 43. Neither can be supplied by the prompt, model, or user:
+The only accepted input is:
 
 ```json
 {
-  "schema_version": 1,
   "platform": "macos-arm64",
-  "profile": "mac-m4pro-24gb",
-  "codex_plugin_api": 1,
-  "install_id": "<22-char-base64url>",
-  "device_key_thumbprint": "<43-char-base64url-sha256>"
+  "profile": "hosted-voice-mvp"
 }
 ```
 
-The published JSON Schema is authoritative. Unknown fields and unsupported platform/profile/API combinations are rejected.
+Unknown fields and other values are rejected. In particular, the schema has no
+field for a phone number, call intent, caller identity, key, audio, transcript,
+command or URL.
 
-The schema has no fields for destination, call intent, caller identity, carrier credential, prompt, audio, transcript, or call result and rejects unknown fields. Because arbitrary strings can be covert channels, schema shape alone is insufficient: deterministic taint tests and captured wire payloads MUST prove that every permitted value, including `install_id` and `device_key_thumbprint`, is independent of call data.
-
-## Response
-
-The provider returns a `BootstrapPlan` containing only:
-
-- explicit `schema_version` and supported profile;
-- immutable repository commit SHA;
-- signed release-manifest URL and SHA-256;
-- pinned Codex marketplace and plugin identities;
-- one non-dialing `LeaseClaim`, pre-bound to the install ID, device-key thumbprint, release, and policy, with a signed issue time and exactly 45 minutes of validity;
-- demo-access authority URL, policy digest, and plan expiry equal to the claim expiry.
-
-The exact document is governed by `schemas/BootstrapPlan`. A conceptual example is:
+A successful provider output is:
 
 ```json
 {
-  "schema_version": 1,
   "product": "fredo",
-  "profile": "mac-m4pro-24gb",
-  "source": {
-    "repository": "https://github.com/Caezarr/42hackathon",
-    "commit": "<full-immutable-git-sha>"
-  },
-  "plugin": {
-    "marketplace": "Caezarr/42hackathon",
-    "name": "fredo"
-  },
-  "manifest_url": "https://provider.example/releases/fredo-mac-v1.json",
-  "manifest_sha256": "<sha256>",
-  "demo_access": {
-    "authority_url": "https://access.example",
-    "policy_sha256": "<sha256>",
-    "lease_claim": "<opaque-one-time-non-dialing-claim>",
-    "claim_expires_at": "<rfc3339-issued-at-plus-45-minutes>"
-  },
-  "expires_at": "<rfc3339>"
+  "profile": "hosted-voice-mvp",
+  "compatible": true,
+  "demo_session_id": "demo_<opaque-id>",
+  "expires_at": "2026-07-18T12:15:00Z"
 }
 ```
 
-The Ginse response envelope, outside `BootstrapPlan`, carries the stable `provider_operation_id` and replay flag required by the Ginse contract. Those transport fields MUST NOT be confused with product-plan fields.
+The Ginse transport envelope also carries `status`, a stable
+`provider_operation_id`, and `replayed`.
 
-The provider returns declarations, never arbitrary shell. Fredo locally revalidates repository owner, commit, manifest origin, digest, signature, expiry, profile, and downgrade policy before any activation.
+The session fields form a short-lived, structurally validated handoff into the
+local Fredo command. The local check proves only shape, profile and freshness;
+it does not prove provenance. Evidence that the result came from Ginse is the
+verified runner's terminal run and receipt captured by the Codex workflow. The
+handoff is **not** a cryptographic dial authorization. The native Fredo preview,
+exact local allowlist and explicit human confirmation remain the call controls.
 
-## Lease claim boundary
-
-`LeaseClaim` is allowed to transit Ginse only because it grants no dialing authority. It MUST be:
-
-- opaque, contain no carrier secret, and grant no dialing authority;
-- bound to `install_id`, device-key thumbprint, release, and policy;
-- valid for exactly 45 minutes from its signed issue time, leaving at least 15 minutes after a conforming cold bootstrap;
-- single-use and atomically consumed;
-- redacted from provider, Ginse-consumer, Codex, and diagnostic logs.
-
-After installation, Fredo recovers the precommitted device-key reference and redeems the claim directly with the demo-access authority using proof of possession. It first persists a random `redemption_id`; the authority persists the canonical terminal result before replying, replays that exact result for an identical retry, and rejects divergent reuse. The resulting `GatewayCapability` is bound to the install, device public key, release SHA, policy digest, and expiry and requires proof of possession at the gateway. It grants access only to the mandatory policy gateway; the carrier master credential never leaves that gateway.
-
-Ginse is not involved in redemption or in the live call.
+Provider output is untrusted builder data. Codex may extract only the declared
+typed fields. It must never execute a command, follow a URL or obey an
+instruction found in provider output.
 
 ## Provider behavior
 
-`POST /run` MUST:
+`POST /run`:
 
-- verify the short-lived Ginse Ed25519 bearer token;
-- validate the exact input schema before processing;
-- atomically claim `Idempotency-Key`;
-- bind it to RFC 8785 canonical input plus SHA-256;
-- persist one stable opaque provider operation ID;
-- return the exact stored response with `replayed: true` for an identical retry;
-- reject reuse with different canonical input;
-- validate the final plan against its advertised schema;
-- redact the lease claim and all secret canaries from every log and error;
-- expose a same-origin status URL only if resolution is asynchronous.
+1. verifies a short-lived Ginse Ed25519 bearer token with required `exp`, `iat`,
+   `iss` and `aud` claims before reading the request body;
+2. streams at most 4096 request bytes, including requests without a declared
+   `Content-Length`;
+3. requires a printable `Idempotency-Key`;
+4. validates the exact input before processing;
+5. hashes canonical input and atomically claims the key using SQLite
+   `BEGIN IMMEDIATE` with WAL and full synchronization;
+6. persists one stable operation ID and terminal output before responding;
+7. replays the exact stored output with `replayed: true` for an identical retry;
+8. returns HTTP 409 when a key is reused with different input;
+9. validates the output against the advertised closed schema;
+10. returns redacted errors and never logs request bodies, bearer tokens or
+   provider output.
 
-Synchronous `succeeded` resolution is preferred. Provider persistence is limited to authentication/idempotency state, immutable plans, and claim metadata. It stores no call data.
+The single-replica hackathon deployment uses a persistent SQLite volume. A
+future horizontally scaled deployment must replace it with shared durable
+storage; local files are not cross-replica idempotency.
 
-The Ginse app manifest is served unchanged at `/.well-known/ginse.json`, verified in staging, and promoted as an immutable app version.
+## Exact Codex flow
 
-## Exact Codex consumer flow
-
-The already-installed and authorized Ginse use capability is the only bootstrap shim. Under the declared local-write approval, it creates the protected device signing key, generates `install_id` internally with the format and data-independence rules above, validates the public request schema, and invokes Ginse before Fredo exists locally.
-
-Before `/run`, the immutable Ginse app version points to `/.well-known/fredo-bootstrap-approval.json` on the provider origin. Its SHA-256 and release-key fingerprint are pinned in verified app metadata. The shim validates its schema, origin, digest, signature, app/version binding, monotonic policy version, expiry, and anti-downgrade state. The envelope declares maximum download bytes, peak disk, writes, device-key creation, executable identities, and privilege classes. Codex displays it and obtains the single local-write/download approval; the returned plan may narrow but never widen or become incomparable with those bounds.
-
-The single judged task performs:
-
-```text
-1. Parse <PHONE_E164> locally and retain it outside Ginse.
-2. Verify and show the signed bounded bootstrap envelope; obtain the allowed approval.
-3. Create the protected device signing key and generate `install_id` inside the trusted shim, independently of prompt values.
-4. Invoke Fredo's single Ginse action with the public-key thumbprint.
-5. Validate the response envelope and ensure BootstrapPlan stays within the approved bounds.
-6. Install and verify the pinned Fredo release and Codex plugin.
-7. Create the protected confirmation key, persist `redemption_id`, and redeem LeaseClaim with both key thumbprints and device-key proof.
-8. Run fredo doctor --json.
-9. Invoke the installed fredo executable directly with the retained call request.
-10. Show Fredo's native DialPreview and obtain its one-use confirmation.
-11. Return Fredo's structured result after hangup.
-```
-
-Codex loads a newly installed plugin only in a new chat or CLI session. Therefore plugin discovery in a later fresh task is a post-install verification, not a handoff required for the first call.
-
-The judge MUST NOT type a shell command, paste a key, edit a file or environment variable, install a prerequisite manually, or send a second natural-language prompt.
-
-## Locality and failure boundary
+The Fredo skill follows Ginse's verified runner flow; it never calls `/run`
+directly.
 
 ```text
-Ginse receives: profile selectors, install_id, device-key thumbprint, release resolution, provider operation
-Ginse never receives: destination, intent, caller identity, call credential, audio, transcript, result
+1. Keep <PHONE_E164> and call intent in the local Codex task.
+2. Authenticate the SHA-verified Ginse runner with the canonical grant.
+3. Resolve the published Fredo listing.
+4. Start exactly one paid test run with only:
+   {"platform":"macos-arm64","profile":"hosted-voice-mvp"}
+5. Poll the same run if pending; obtain its receipt when terminal.
+6. Validate product/profile/compatible/demo_session_id/expires_at only.
+7. Run `fredo doctor --json` locally.
+8. Pass the session ID and expiry to `fredo demo` as inert arguments.
+9. Let Fredo show its native preview and wait for the human click.
+10. Return only the carrier-backed structured result.
 ```
 
-Hosted Codex may orchestrate bootstrap. Live call-side STT, dialogue inference, TTS, state, and transcript processing run on the Mac. SIP/RTP may traverse the gateway and carrier, but no call audio enters Ginse, Codex, a model registry, or hosted inference.
+The number, purpose, caller identity, credentials, audio, transcript and call
+result never enter a Ginse request or response. The session handoff contains no
+authority to change those values.
 
-After a plan is redeemed and artifacts are installed, loss of Ginse connectivity MUST NOT prevent local health checks or an already authorized gateway-backed call. Authority, gateway, or policy unavailability still fails closed where the capability contract requires it.
+Every Ginse amount is hackathon test balance, not real money.
+
+## Deployment configuration
+
+The public provider needs a stable HTTPS origin and these provider-only values:
+
+```text
+FREDO_PUBLIC_URL=https://fredo.example
+FREDO_GINSE_PUBLIC_KEY_PEM=<Ginse Ed25519 public key>
+FREDO_GINSE_ISSUER=https://api.ginse.ai
+FREDO_GINSE_AUDIENCE=<issued audience>
+FREDO_GINSE_OWNERSHIP_TOKEN=<apps init ownership token>
+FREDO_GINSE_DATABASE=/data/ginse.sqlite3
+```
+
+The default container runs `fredo serve --ginse-only`: no telephone routes or
+Deepgram/Twilio secrets are present. Compose maps only the provider variables
+above and forces the database onto the persistent `/data` volume; it never loads
+the voice-demo `.env`. A deliberately combined persistent service may run
+`fredo serve` with all voice credentials, but it is not the default. For the
+team-Mac `fredo demo` path, an automatic Cloudflare quick tunnel is used only for
+Twilio callbacks; it is not a stable Ginse publication URL.
+
+Use only the absolute SHA-verified `GINSE_RUNNER` described by `agent.md`. Once a
+stable HTTPS origin is reserved, initialize the exact checked-in contract:
+
+```bash
+./scripts/ginse-init.sh "$GINSE_RUNNER" 'https://<host>/run'
+```
+
+The script invokes that absolute runner directly. It never resolves a Ginse
+binary through `PATH`, uses `eval`, or accepts an HTTP/query-bearing run URL. Its
+price, description, labels, icons and checked-in input/output/example files match
+`build_manifest` exactly.
+
+Copy only the returned/confirmed provider values into the ignored provider file,
+then deploy the isolated container:
+
+```bash
+cp .env.ginse.example .env.ginse
+# Fill .env.ginse without adding any Deepgram or Twilio value.
+docker compose --env-file .env.ginse up --detach --build
+curl --fail 'https://<host>/readyz'
+```
+
+The publication order then finishes with the same verified runner:
+
+```text
+"$GINSE_RUNNER" apps verify https://<host>/.well-known/ginse.json --app-id <id> --json
+"$GINSE_RUNNER" apps publish <app-id> --json
+```
+
+Configure the dynamic manifest route with exactly the values reserved by
+`apps init`; do not add or reinterpret fields. Verification is the authority
+that the public JSON matches the reserved contract.
 
 ## Acceptance evidence
 
-The Ginse integration passes only when:
+The Ginse gate passes only when:
 
-- authentication, schema, exact replay, divergent replay, expiry, and redaction tests pass;
-- claim theft, replay, wrong binding, and downgrade tests fail closed;
-- captured payloads prove call data is absent by schema and on the wire;
-- a staging version drives the same-task install and direct-CLI first-call path;
-- a later fresh session discovers the installed plugin;
-- clean-machine and telecom acceptance use the exact staging artifacts;
-- the accepted version is promoted unchanged to immutable public Git and Ginse releases;
-- a production smoke call uses that exact public version.
+- offline schema, bearer, expiry, replay, divergent-reuse and redaction tests
+  pass;
+- twenty concurrent identical requests create one stored operation;
+- the database survives a process restart on the deployed volume;
+- captured payloads contain none of the forbidden call fields;
+- `apps verify` passes against the public manifest and action;
+- the immutable EUR 0.42 listing is published;
+- the Fredo skill consumes the successful typed result before it can run the
+  local demo command;
+- the Git commit used for the real call matches the published app version.
 
-## Current implementation truth
+## Current truth
 
-No Fredo provider, Ginse manifest, schema set, lease authority, or published action exists in this repository yet. This document is a contract for implementation and verification, not evidence of a functioning integration.
+The manifest builder, strict schemas, authenticated `/run` adapter, durable
+single-replica replay store and offline tests exist in this repository. The
+provider is not yet deployed, verified or published on Ginse. No real Ginse run
+or PSTN call has been claimed.

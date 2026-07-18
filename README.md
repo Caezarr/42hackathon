@@ -1,133 +1,171 @@
-# Fredo — the local phone for Codex
+# Fredo — make a phone ring from Codex
 
-**Discover through Ginse. Type one prompt. Make a real phone ring.**
-
-Fredo is a generic phone capability for Codex. The judged target is a single natural-language prompt that bootstraps the pinned Mac runtime, previews and confirms a call, runs the live conversation with local call-side models, and returns the result to the same Codex task.
+**One Codex prompt → Ginse → native confirmation → a real consented phone call.**
 
 > [Version française](README.fr.md)
 
-## Current truth
+Fredo is a guarded outbound phone capability for Codex. The immediate
+hackathon profile runs the control surface on the team's Mac, uses Twilio for
+PSTN access, and uses Deepgram Voice Agent for hosted French STT, dialogue and
+TTS.
 
-Fredo is **not implemented end to end**. This repository currently contains the normative goal, roadmap, architecture research, source pins, and an isolated [voice-cloning proof of concept](voice-clone-poc/README.md). There is no Fredo plugin, runtime, Ginse provider, policy gateway, or verified PSTN call yet.
+## Status
 
-- [`GOAL.md`](GOAL.md) is the normative acceptance specification.
-- [`ROADMAP.md`](ROADMAP.md) orders implementation by evidence.
+The runtime, CLI, French agent configuration, Twilio media bridge, automatic
+tunnel, Codex plugin and tests are implemented. The package builds and the
+offline suite passes.
 
-## Judged experience
+**A real PSTN call is not verified yet.** This checkout has no Twilio Account
+SID, Auth Token or caller number. A Deepgram key alone cannot access the phone
+network. See [GOAL.md](GOAL.md) for the exact evidence still required.
 
-The judge types once:
-
-> “Use Ginse to prepare Fredo, then call `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in French, disclose immediately that you are an automated synthetic voice, ask whether the demonstration works, then return the answer here.”
-
-The flow may show declared Codex/macOS installation approvals and one Fredo-owned call-confirmation dialog. It may not require a shell command, credential paste, source edit, prerequisite installation, or second typed prompt.
+## The intentionally ridiculous demo stack
 
 ```mermaid
 flowchart LR
-    C["Codex task"] --> G["Ginse Fredo action"]
-    G --> BP["Pinned BootstrapPlan + one-time lease claim"]
-    BP --> C
-    C --> CLI["Installed fredo executable"]
-    CLI --> A["Demo-access authority"]
-    A --> CAP["Install-bound gateway capability"]
-    CLI --> AI["Local STT + reasoning + TTS"]
-    CLI --> UI["Native call preview + confirmation"]
-    AI <--> GW["Team SIP policy gateway"]
-    GW --> PSTN["Verified carrier + phone network"]
-    CLI --> C
+    J["Judge: one Codex prompt"] --> G["Ginse: EUR 0.42 test action"]
+    G --> C["Fredo CLI on team Mac"]
+    C --> U["Native macOS DialPreview"]
+    U --> T["Twilio outbound PSTN"]
+    T <--> W["Twilio Media Stream over quick tunnel"]
+    W <--> D["Deepgram Voice Agent: hosted STT + LLM + Aura-2 French TTS"]
+    T --> P["Consenting judge phone"]
+    C --> J
 ```
 
-Codex documentation requires a new chat or CLI session before newly installed plugin skills become available. The original bootstrap task therefore invokes the installed `fredo` executable directly for the first call. A fresh session verifies plugin discovery afterward.
+This is the named `hosted-voice-mvp` profile. It is not an all-local inference
+system: call audio and conversation context reach Deepgram, while Twilio sees
+the destination and media transport. Ginse never receives the phone number,
+intent, audio, transcript, credentials or result.
 
-## Ginse is essential, not the call backend
+## Team-Mac setup
 
-Fredo publishes one fixed-price Ginse action: **Resolve a Fredo demo bootstrap**.
-
-Ginse receives only the supported Mac profile, a prompt-independent random install ID, and the thumbprint of a protected device key created locally before the action. The returned plan pins the repository commit, artifact manifest, plugin identity, policy digest, and a short-lived claim bound to that key with no dialing authority. The destination and call intent stay outside Ginse.
-
-After installation, Fredo proves possession of the precommitted device key and idempotently exchanges the claim for an install-bound capability to the team's SIP policy gateway. The gateway holds the shared demo carrier credential and enforces issuance, spend, rate, total-attempt, duration, exact-destination, concurrency, and revocation limits. Judges therefore use the team's telecom access without receiving its carrier master key. BYOK is post-hackathon work.
-
-## Honest locality boundary
-
-Local means the live conversation intelligence and durable Fredo state run on the Mac:
-
-- local STT, dialogue inference, TTS, state, and transcript;
-- no hosted call-side STT, LLM, TTS, or voice-agent API;
-- no call audio sent to Codex, Ginse, or model registries;
-- hosted Codex may orchestrate the bootstrap;
-- Ginse/provider are bootstrap services;
-- the gateway/carrier/PSTN remain necessary telecom boundaries.
-
-The gateway may relay SIP/RTP but must not record audio or receive prompts, transcripts, model state, or summaries.
-
-## Codex packaging
-
-The target package is a Codex plugin containing a Fredo skill. The local executable is the canonical automation boundary; an optional STDIO MCP adapter may expose the same domain operations but may not own unique business logic.
-
-The installed CLI currently supports Git-backed marketplace refs through `codex plugin marketplace add ... --ref <sha>` and plugin installation through `codex plugin add`. Plugin capabilities are tested in a new session after installation.
-
-Official references:
-
-- [Build Codex plugins](https://learn.chatgpt.com/docs/build-plugins)
-- [Build Codex skills](https://learn.chatgpt.com/docs/build-skills)
-- [Configure local MCP servers](https://learn.chatgpt.com/docs/extend/mcp)
-
-## Architecture hypothesis
-
-The intentionally excessive laboratory path remains:
-
-```text
-Fredo -> durable local state -> Pipecat -> local voice models
-      -> LiveKit -> LiveKit SIP -> Asterisk/policy gateway -> carrier -> phone
-```
-
-Pipecat, LiveKit, Asterisk, PyVoIP, SQLite, Python, Docker, and Moshi are hypotheses, not acceptance criteria. The judged implementation may replace any of them if it preserves the invariants and passes every gate in `GOAL.md`.
-
-- Moshi-MLX is a feature-flagged full-duplex experiment.
-- PyVoIP is a diagnostic SIP/RTP adapter, not the trusted judged transport.
-- Voice cloning is a consented stretch feature; a generic local voice is mandatory.
-- A preinstalled container runtime is forbidden as a clean-machine prerequisite.
-
-## Safety boundary
-
-The mandatory demo policy includes:
-
-- one verified team caller identity;
-- exact pre-enrolled E.164 allowlists, default deny; `+336` and `+337` are only eligible classes, never wildcard access;
-- one native, one-use confirmation bound to the complete canonical call request;
-- bounded judge/qualification capability profiles, total-attempt and completion quotas, one concurrent call, and a 180-second hard duration cap;
-- a global gateway concurrency limit and EUR 50 carrier-account cap for judging;
-- synthetic-voice disclosure as the first substantive audio;
-- no emergency, premium-rate, anonymous, scraped, bulk, or non-consensual calls;
-- recordings disabled;
-- at-most-once dialing, fail-closed revocation, redacted results, and a kill switch.
-
-## Definition of done
-
-The project passes only when the exact candidate bytes complete the staged acceptance cycle in [`GOAL.md`](GOAL.md): contracts, one-prompt clean bootstrap, 100-turn local benchmark, safety and crash tests, five controlled calls, one real jury call, evidence graph, Ginse verification, and promotion to matching public Git and Ginse releases.
-
-## Repository map
-
-```text
-GOAL.md                    Normative acceptance specification
-ROADMAP.md                 Evidence-ordered implementation roadmap
-docs/ARCHITECTURE.md       Non-normative component hypothesis
-docs/BOOTSTRAP.md          First-run and recovery design
-docs/TELEPHONY.md          Telecom and media boundary
-docs/GINSE.md              Single marketplace action contract
-docs/STACK-CANDIDATES.md   Verified research and open choices
-docs/decisions/            Accepted architectural decisions
-deploy/upstreams.lock.json Pinned source candidates, not a runtime manifest
-voice-clone-poc/           Independent stretch experiment
-```
-
-## Development source bundle
+Prerequisites for the current hackathon build are Apple Silicon/macOS,
+[`uv`](https://docs.astral.sh/uv/) and `cloudflared`. The demo operator performs
+this once:
 
 ```bash
 git clone https://github.com/Caezarr/42hackathon.git
 cd 42hackathon
-./scripts/clone-upstreams.sh core
+./scripts/bootstrap.sh
+uv run fredo configure
+uv run fredo doctor --json
 ```
 
-This clones pinned development sources into `.upstreams/`. It is not the Fredo installer and does not prove runtime readiness.
+`fredo configure` asks privately for Deepgram and Twilio credentials, the
+verified Twilio caller number, and one exact consenting +336/+337 destination.
+It writes only an ignored mode-0600 `.env`; it never prints those secrets.
 
-Fredo is licensed under [Apache-2.0](LICENSE). Third-party source and model licences remain their own and must be reviewed before redistribution.
+The Deepgram key shared during the hackathon must be rotated afterward. Never
+paste it into source, a plugin, a Ginse payload or a client bundle.
+
+## One-shot call
+
+```bash
+uv run fredo demo \
+  --ginse-profile 'hosted-voice-mvp' \
+  --ginse-demo-session-id '<demo_session_id>' \
+  --ginse-expires-at '<expires_at>' \
+  --to '+33600000000' \
+  --intent 'Présenter Fredo et demander si la démonstration fonctionne'
+```
+
+The Fredo skill fills the three Ginse values from the successful EUR 0.42 test
+run. They are shown here only for a manual operator smoke test.
+
+The command:
+
+1. refuses missing credentials, mock transport, invalid policy or a missing
+   tunnel binary;
+2. shows the complete destination, verified caller ID, purpose, disclosure and
+   180-second cap in a native macOS dialog;
+3. dials only after the human clicks **Appeler**;
+4. creates a temporary Cloudflare tunnel for Twilio callbacks;
+5. bridges μ-law 8 kHz audio between Twilio and Deepgram without transcoding;
+6. returns a structured transcript/result, then tears down the local server and
+   tunnel.
+
+Closing the dialog means zero carrier call. Only exact pre-enrolled French
+mobile numbers pass. Caller-ID spoofing, emergency/short/premium numbers,
+recording, bulk calling and arbitrary remote tools are out of scope and blocked.
+
+## Codex plugin
+
+The repository includes a valid plugin and repo-scoped marketplace:
+
+```text
+.agents/plugins/marketplace.json
+codex-plugin/fredo/.codex-plugin/plugin.json
+codex-plugin/fredo/skills/fredo-call/SKILL.md
+```
+
+For local testing, add this checkout as a marketplace, then install Fredo:
+
+```bash
+codex plugin marketplace add .
+codex plugin add fredo@fredo-local
+```
+
+Installed skills are loaded in a new Codex task/session. During an initial
+same-task install, Codex invokes the newly installed `fredo` executable directly.
+
+Target jury prompt:
+
+> Use Ginse to prepare Fredo from `github.com/Caezarr/42hackathon`, then call
+> `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in
+> French, disclose immediately that you are an automated synthetic voice, ask
+> whether the demo works, then return the answer here.
+
+## Ginse contract
+
+Ginse is mandatory and deliberately narrow. Fredo exposes one fixed-price
+action, **Prepare Fredo demo**, at EUR 0.42 of hackathon test balance. It accepts
+only the platform/profile selectors and returns data-only compatibility/session
+fields. Provider output never contains an installation command or URL because
+Ginse correctly classifies builder output as untrusted data.
+
+The provider contract requires Ed25519 bearer verification, strict schemas and
+durable SQLite idempotency. Publishing and live verification remain before the
+final jury gate. See [docs/GINSE.md](docs/GINSE.md).
+
+## Commands
+
+```text
+fredo configure          private one-time team setup
+fredo doctor --json      no-dial readiness report, secrets redacted
+fredo demo ...           Ginse handoff + confirmation + tunnel + real call
+fredo call ...           Ginse handoff through an already running voice service
+fredo serve              persistent combined voice service
+fredo serve --ginse-only marketplace provider without call routes
+fredo secret             generate an endpoint secret
+```
+
+## Develop and verify
+
+```bash
+uv sync --frozen --extra dev
+uv run ruff check src tests
+uv run pytest
+uv build
+```
+
+Container deployment through [Dockerfile](Dockerfile) and
+[compose.yaml](compose.yaml) defaults to the isolated Ginse provider and a
+persistent `/data` volume. Initialize the exact manifest with
+`scripts/ginse-init.sh`, copy `.env.ginse.example` to ignored `.env.ginse`, and
+run `docker compose --env-file .env.ginse up --build`. Compose passes only Ginse
+provider variables; it never injects the voice-demo `.env`, Deepgram key or
+Twilio credentials. See [docs/GINSE.md](docs/GINSE.md) for the verified order.
+
+## Documentation
+
+- [GOAL.md](GOAL.md) — active measurable hackathon contract
+- [ROADMAP.md](ROADMAP.md) — implementation order
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — architecture and future local path
+- [docs/GINSE.md](docs/GINSE.md) — marketplace/provider contract
+- [docs/TELEPHONY.md](docs/TELEPHONY.md) — telecom boundary
+- [ADR 0005](docs/decisions/0005-hosted-voice-mvp.md) — why the MVP uses hosted voice
+- [Pinned upstreams](deploy/upstreams.lock.json) — immutable source references
+
+Fredo is Apache-2.0 licensed. The official Deepgram reference reused for the
+media design is MIT licensed; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

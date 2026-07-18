@@ -1,44 +1,38 @@
 # Contributing
 
-Thanks for helping build Fredo during the hackathon.
+Read [README.md](README.md), [GOAL.md](GOAL.md), [ROADMAP.md](ROADMAP.md),
+[AGENTS.md](AGENTS.md) and [SECURITY.md](SECURITY.md) first.
 
-## Before starting
+## Principles
 
-Read:
+- Prefer one verified end-to-end call path over extra providers or UI.
+- Keep Ginse mandatory but free of destination, intent and call content.
+- Keep native confirmation, exact allowlisting, verified caller ID and the
+  180-second cap.
+- Call the active profile `hosted-voice-mvp`; Deepgram performs hosted voice
+  processing.
+- Never commit `.env`, credentials, real phone numbers, transcripts or recordings.
+- Pin dependencies/upstreams and preserve third-party notices.
+- Label mocked, offline-tested, live-qualified and planned behavior separately.
 
-1. [`README.md`](README.md)
-2. [`AGENTS.md`](AGENTS.md)
-3. [`GOAL.md`](GOAL.md)
-4. [`ROADMAP.md`](ROADMAP.md)
-5. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+## Verify a change
 
-## Development principles
+```bash
+uv sync --frozen --extra dev
+uv run ruff check src tests
+uv run pytest
+uv build
+git diff --check
+```
 
-- Treat [`GOAL.md`](GOAL.md) as the normative product and acceptance contract. Architecture notes and ADRs may select mechanisms but may not weaken its invariants or gates.
-- Prefer one working end-to-end path over many unverified providers.
-- Keep the live-call runtime local; Ginse is mandatory for discovery/bootstrap and the carrier is mandatory for PSTN.
-- Keep the judged team-funded gateway path separate from post-hackathon BYOK work.
-- Separate compute profiles from phone transports.
-- Never commit secrets, phone numbers, recordings, transcripts, model weights, or unredacted evidence. Version schemas, safe manifests, digests, licences and provenance needed to reproduce a release.
-- Pin dependencies and record their licenses.
-- Do not weaken destination policy or confirmation to make a demo easier.
-- Attach the matching `GOAL.md` evidence to every completed milestone.
+For live tests, use only an exact pre-enrolled consenting fixture. Record the
+Git SHA, models, caller ID hint, result and timings without storing the full
+number, audio or credentials.
 
-## Branch and pull request flow
+## Pull requests
 
-- Branch from `main`.
-- Keep commits small and named after the delivered outcome.
-- Explain what is implemented versus mocked.
-- Include commands and outputs used for verification.
-- Use draft pull requests until the demo path has been exercised.
-- Do not promote a Ginse or Git release whose bytes differ from the accepted candidate.
-
-## Definition of a valid contribution
-
-A change is ready when:
-
-- its behavior and ownership boundary are documented;
-- relevant tests pass;
-- failure leaves the installation in a recoverable state;
-- it does not add an unpinned network dependency;
-- it respects the safety constraints in [`SECURITY.md`](SECURITY.md).
+- Explain the product outcome and affected Goal gate.
+- State what was tested offline and what was tested against real services.
+- Include failure/abuse cases and remaining blockers.
+- Do not publish Git/Ginse releases whose bytes or configuration differ from
+  the qualified candidate.

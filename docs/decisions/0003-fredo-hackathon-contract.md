@@ -1,6 +1,10 @@
 # ADR 0003: Fredo hackathon contract
 
-Status: accepted on 2026-07-18; one-prompt bootstrap and judged demo access amended by [ADR 0004](0004-one-prompt-demo-access.md).
+Status: historical contract accepted on 2026-07-18. Its local inference,
+`BootstrapPlan`, `LeaseClaim` and SIP gateway requirements are superseded for
+the active `hosted-voice-mvp` by [ADR 0005](0005-hosted-voice-mvp.md) and
+[`GOAL.md`](../../GOAL.md) `0.4-draft`. The Fredo name, generic Codex tool and
+mandatory Ginse product decisions remain active.
 
 ## Context
 

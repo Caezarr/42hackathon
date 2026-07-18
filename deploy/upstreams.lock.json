@@ -2,7 +2,7 @@
   "schema_version": 1,
   "audited_at": "2026-07-18",
   "policy": {
-    "default_profile": "core",
+    "default_profile": "hosted-voice-mvp",
     "source": "Every repository is checked out at an immutable commit.",
     "runtime": "OCI images and model files require separate immutable digests before release.",
     "licenses": "Source and model licenses must be rechecked before redistribution."
@@ -106,6 +106,15 @@
       "revision": "e6a55d2722a65870ef52a6c9f6ecfc0e90f38362",
       "license": "MIT AND Apache-2.0; model weights CC-BY-4.0",
       "required": false
+    },
+    {
+      "id": "deepgram-voice-agent-outbound-telephony",
+      "profiles": ["hosted-voice-mvp"],
+      "role": "Hosted Deepgram Voice Agent STT/LLM/TTS bridge to Twilio outbound PSTN",
+      "repository": "https://github.com/deepgram-devs/deepgram-voice-agent-outbound-telephony.git",
+      "revision": "e748852e653f6b8f184429d6aa79e7ea2e5007f9",
+      "license": "MIT",
+      "required": true
     }
   ]
 }

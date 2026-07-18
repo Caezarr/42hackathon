@@ -1,6 +1,9 @@
 # ADR 0002: Verified caller identity only
 
-Status: accepted on 2026-07-18; judged gateway custody clarified by [ADR 0004](0004-one-prompt-demo-access.md).
+Status: accepted on 2026-07-18 for verified caller identity. The server-side
+SIP gateway custody described below is superseded for the active
+`hosted-voice-mvp` by [ADR 0005](0005-hosted-voice-mvp.md), which temporarily
+uses the team's verified Twilio identity from the team-controlled runtime.
 
 ## Context
 

@@ -1,6 +1,9 @@
 # ADR 0001: Per-user self-hosting
 
-Status: accepted on 2026-07-18; Ginse distribution amended by [ADR 0003](0003-fredo-hackathon-contract.md), and the judged telecom-ownership exception amended by [ADR 0004](0004-one-prompt-demo-access.md).
+Status: accepted as long-term direction on 2026-07-18. Its judged gateway,
+local-inference and Ginse bootstrap mechanism is superseded for the active
+`hosted-voice-mvp` by [ADR 0005](0005-hosted-voice-mvp.md) and
+[`GOAL.md`](../../GOAL.md) `0.4-draft`.
 
 ## Context
 

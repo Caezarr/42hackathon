@@ -1,6 +1,8 @@
 # Fredo stack candidates
 
-Status: research snapshot recorded on 2026-07-18. Candidates are not implementation claims.
+Status: historical research snapshot recorded on 2026-07-18. Candidates are
+not implementation claims. [ADR 0005](decisions/0005-hosted-voice-mvp.md)
+selects Deepgram Voice Agent plus Twilio for the active hackathon profile.
 
 ## Reference environment
 
@@ -46,7 +48,10 @@ References:
 
 The Ginse provider contract is one fixed-price HTTPS action. The provider keeps hosting its endpoint and must implement authentication, schema validation, durable idempotency and a stable operation ID.
 
-It cannot directly install on a user's Mac. Fredo maps the action to a deterministic `BootstrapPlan`, then Codex performs the authorized local install.
+It cannot directly install on a user's Mac. The active profile uses one closed,
+data-only preparation result; Codex installs/verifies the human-named Fredo
+repository independently and passes only the typed session fields into the
+local CLI.
 
 References:
 
@@ -92,7 +97,7 @@ Decision: benchmark `moshi_mlx` q4 on the M4 Pro as a feature-flagged wow path. 
 
 No primary repository matching the spoken name “Miro 2.5” was found in the targeted search. It may refer to Moshi or another local model. Do not add it to the runtime manifest until the exact project and license are confirmed.
 
-## Telecom stack
+## Historical local telecom candidates
 
 Candidate roles:
 
