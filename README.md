@@ -1,184 +1,123 @@
 # Fredo — the local phone for Codex
 
-**Discover it through Ginse. Install it on your Mac. Call from Codex.**
+**Discover through Ginse. Type one prompt. Make a real phone ring.**
 
-Fredo is a generic local telephony capability for Codex. Once installed, it turns a Codex request into a previewed, confirmed, real phone call powered by models running on the user's machine, then returns a structured result to the same task.
-
-The hackathon proof is deliberately visible: start from Ginse, bootstrap Fredo locally, and make a judge's real phone ring from a verified number.
+Fredo is a generic phone capability for Codex. The judged target is a single natural-language prompt that bootstraps the pinned Mac runtime, previews and confirms a call, runs the live conversation with local call-side models, and returns the result to the same Codex task.
 
 > [Version française](README.fr.md)
 
-## Current status
+## Current truth
 
-This repository currently contains the product contract, target architecture, source pins and execution roadmap. The end-to-end caller is **not implemented yet**. Commands and component boundaries below describe what the team is about to build.
+Fredo is **not implemented end to end**. This repository currently contains the normative goal, roadmap, architecture research, source pins, and an isolated [voice-cloning proof of concept](voice-clone-poc/README.md). There is no Fredo plugin, runtime, Ginse provider, policy gateway, or verified PSTN call yet.
 
-The measurable completion contract is [`GOAL.md`](GOAL.md). The ordered implementation plan is [`ROADMAP.md`](ROADMAP.md).
+- [`GOAL.md`](GOAL.md) is the normative acceptance specification.
+- [`ROADMAP.md`](ROADMAP.md) orders implementation by evidence.
 
-A standalone [local voice-cloning proof of concept](voice-clone-poc/README.md) tests WAV reference audio and French phrase generation with Chatterbox Multilingual V3.
+## Judged experience
 
-## Product flow
+The judge types once:
+
+> “Use Ginse to prepare Fredo, then call `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in French, disclose immediately that you are an automated synthetic voice, ask whether the demonstration works, then return the answer here.”
+
+The flow may show declared Codex/macOS installation approvals and one Fredo-owned call-confirmation dialog. It may not require a shell command, credential paste, source edit, prerequisite installation, or second typed prompt.
 
 ```mermaid
 flowchart LR
-    G["Ginse Fredo action"] --> BP["Versioned BootstrapPlan"]
-    BP --> C["Codex"]
-    C --> PL["Fredo plugin + skill"]
-    PL --> CLI["Local fredo CLI"]
-    CLI --> D["fredod + SQLite"]
-    D --> P["Pipecat"]
-    P --> AI["Local voice engine"]
-    P <--> LK["LiveKit"]
-    LK <--> SIP["LiveKit SIP / Asterisk"]
-    SIP --> T["User-owned SIP trunk"]
-    T --> PSTN["Phone network"]
+    C["Codex task"] --> G["Ginse Fredo action"]
+    G --> BP["Pinned BootstrapPlan + one-time lease claim"]
+    BP --> C
+    C --> CLI["Installed fredo executable"]
+    CLI --> A["Demo-access authority"]
+    A --> CAP["Install-bound gateway capability"]
+    CLI --> AI["Local STT + reasoning + TTS"]
+    CLI --> UI["Native call preview + confirmation"]
+    AI <--> GW["Team SIP policy gateway"]
+    GW --> PSTN["Verified carrier + phone network"]
+    CLI --> C
 ```
 
-Ginse is the entry point and installation resolver. It is not the call backend. After bootstrap, the phone number, call intent, models, credentials, audio, transcript and state remain local.
+Codex documentation requires a new chat or CLI session before newly installed plugin skills become available. The original bootstrap task therefore invokes the installed `fredo` executable directly for the first call. A fresh session verifies plugin discovery afterward.
 
-## The promise
+## Ginse is essential, not the call backend
 
-First use has two explicit stages because a newly installed Codex plugin is loaded by a fresh task: a bootstrap task starts from Ginse and ends at `fredo doctor`; a fresh Fredo task then owns the call.
+Fredo publishes one fixed-price Ginse action: **Resolve a Fredo demo bootstrap**.
 
-Once installed, from one Codex task the user can:
+Ginse receives only the supported Mac profile, a prompt-independent random install ID, and the thumbprint of a protected device key created locally before the action. The returned plan pins the repository commit, artifact manifest, plugin identity, policy digest, and a short-lived claim bound to that key with no dialing authority. The destination and call intent stay outside Ginse.
 
-1. ask Fredo to call a real destination;
-2. inspect the number, caller identity, intent and duration limit;
-3. explicitly confirm the call;
-4. follow, interrupt or cancel it;
-5. receive a structured result after hangup.
+After installation, Fredo proves possession of the precommitted device key and idempotently exchanges the claim for an install-bound capability to the team's SIP policy gateway. The gateway holds the shared demo carrier credential and enforces issuance, spend, rate, total-attempt, duration, exact-destination, concurrency, and revocation limits. Judges therefore use the team's telecom access without receiving its carrier master key. BYOK is post-hackathon work.
 
-Every installation owns its models, data, SIP account or SIM, verified caller identity, policy and telecom bill. Fredo does not operate a shared call platform.
+## Honest locality boundary
 
-## Ginse-first bootstrap
+Local means the live conversation intelligence and durable Fredo state run on the Mac:
 
-Ginse apps expose one fixed HTTPS action and cannot directly call a user's `localhost`. Fredo therefore publishes one deterministic action that returns a schema-valid bootstrap plan:
+- local STT, dialogue inference, TTS, state, and transcript;
+- no hosted call-side STT, LLM, TTS, or voice-agent API;
+- no call audio sent to Codex, Ginse, or model registries;
+- hosted Codex may orchestrate the bootstrap;
+- Ginse/provider are bootstrap services;
+- the gateway/carrier/PSTN remain necessary telecom boundaries.
 
-```json
-{
-  "schema_version": 1,
-  "product": "fredo",
-  "profile": "mac-m4pro-24gb",
-  "repository": "https://github.com/Caezarr/42hackathon",
-  "commit": "<immutable-git-sha>",
-  "manifest_url": "https://provider.example/fredo-mac-v1.json",
-  "manifest_sha256": "<sha256>"
-}
-```
+The gateway may relay SIP/RTP but must not record audio or receive prompts, transcripts, model state, or summaries.
 
-Codex verifies that plan, installs the Fredo plugin from the pinned revision, shows local downloads and permissions, then runs the local bootstrap after approval.
+## Codex packaging
 
-The Ginse provider never receives a phone number or call payload. See [`docs/GINSE.md`](docs/GINSE.md).
+The target package is a Codex plugin containing a Fredo skill. The local executable is the canonical automation boundary; an optional STDIO MCP adapter may expose the same domain operations but may not own unique business logic.
 
-The provider itself is a mandatory, tiny service on a team-controlled public HTTPS Docker host. It serves plans and durable idempotency only. It is independent from the optional public SIP/RTP edge used when carrier networking requires one.
+The installed CLI currently supports Git-backed marketplace refs through `codex plugin marketplace add ... --ref <sha>` and plugin installation through `codex plugin add`. Plugin capabilities are tested in a new session after installation.
 
-## Codex integration
-
-Fredo is packaged as a Codex plugin:
-
-- a skill owns the conversation workflow;
-- the `fredo` CLI is the canonical local contract;
-- `fredod` owns durable long-running calls;
-- an optional STDIO MCP adapter may expose typed tools over the same contract.
-
-MCP is not a second implementation. The skill can invoke the CLI directly when MCP is unavailable.
-
-The hackathon demo uses Codex CLI with a local OSS provider so the reasoning surface does not require hosted inference. Fredo can support hosted Codex later, with that separate cloud boundary stated honestly.
-
-Official Codex references:
+Official references:
 
 - [Build Codex plugins](https://learn.chatgpt.com/docs/build-plugins)
 - [Build Codex skills](https://learn.chatgpt.com/docs/build-skills)
 - [Configure local MCP servers](https://learn.chatgpt.com/docs/extend/mcp)
 
-## Reference machine
+## Architecture hypothesis
 
-The only required hackathon profile is the inspected Mac:
-
-- Apple M4 Pro;
-- 24 GB RAM;
-- macOS 26.5 on `arm64`;
-- native Metal/MLX inference;
-- isolated Python 3.12 runtime created by Fredo;
-- Docker Compose allowed for media and telecom services.
-
-Support for other Macs and Linux is post-hackathon work.
-
-## The deliberately absurd stack
-
-The hero path is excessive on purpose, but every layer has one job:
-
-- **Fredo plugin + skill** — discovery and workflow inside Codex;
-- **Fredo CLI + daemon** — stable JSON contract and asynchronous execution;
-- **SQLite WAL** — durable jobs, events, confirmations and idempotency;
-- **Pipecat** — realtime dialogue graph, VAD and interruption;
-- **native local models** — STT, LLM and generic TTS on Apple Silicon;
-- **LiveKit** — realtime media room and supervision;
-- **LiveKit SIP** — SIP/media bridge;
-- **Asterisk** — carrier quirks, DTMF, CDR and future SIM/Bluetooth transports;
-- **operator-owned SIP trunk** — verified access to the public phone network.
-
-The target media path is:
+The intentionally excessive laboratory path remains:
 
 ```text
-Pipecat <-> LiveKit <-> LiveKit SIP <-> Asterisk <-> SIP carrier <-> judge
+Fredo -> durable local state -> Pipecat -> local voice models
+      -> LiveKit -> LiveKit SIP -> Asterisk/policy gateway -> carrier -> phone
 ```
 
-Fallbacks are evidence-driven: LiveKit SIP can connect directly to the trunk, or Pipecat can use Asterisk without LiveKit supervision. A public telecom edge is introduced only if NAT or the carrier makes it necessary; the small public Ginse provider already exists separately.
+Pipecat, LiveKit, Asterisk, PyVoIP, SQLite, Python, Docker, and Moshi are hypotheses, not acceptance criteria. The judged implementation may replace any of them if it preserves the invariants and passes every gate in `GOAL.md`.
 
-## Local voice engines
-
-The reliable path is modular local STT -> LLM -> TTS. Exact models are selected after a benchmark on the reference Mac.
-
-[Moshi](https://github.com/kyutai-labs/moshi) is the experimental full-duplex path. Its official repository provides an MLX backend and q4/q8 models for Mac, but it remains behind a feature flag until it beats the latency and memory gates in [`GOAL.md`](GOAL.md).
-
-[PyVoIP](https://github.com/tayler6000/pyVoIP) is a pure-Python SIP/RTP laboratory adapter. Its documented PCMA/PCMU 8 kHz scope makes it useful for diagnostics, not the judged transport.
-
-Voice cloning is a post-call nice-to-have. A generic local voice is the mandatory fallback.
+- Moshi-MLX is a feature-flagged full-duplex experiment.
+- PyVoIP is a diagnostic SIP/RTP adapter, not the trusted judged transport.
+- Voice cloning is a consented stretch feature; a generic local voice is mandatory.
+- A preinstalled container runtime is forbidden as a clean-machine prerequisite.
 
 ## Safety boundary
 
-Fredo is not a caller-ID spoofing or bulk-dialing tool.
+The mandatory demo policy includes:
 
-The mandatory policy includes:
+- one verified team caller identity;
+- exact pre-enrolled E.164 allowlists, default deny; `+336` and `+337` are only eligible classes, never wildcard access;
+- one native, one-use confirmation bound to the complete canonical call request;
+- bounded judge/qualification capability profiles, total-attempt and completion quotas, one concurrent call, and a 180-second hard duration cap;
+- a global gateway concurrency limit and EUR 50 carrier-account cap for judging;
+- synthetic-voice disclosure as the first substantive audio;
+- no emergency, premium-rate, anonymous, scraped, bulk, or non-consensual calls;
+- recordings disabled;
+- at-most-once dialing, fail-closed revocation, redacted results, and a kill switch.
 
-- a caller identity verified by the user's carrier;
-- explicit one-use confirmation bound to destination and intent;
-- blocked emergency, premium-rate, short-code and prohibited destinations;
-- one active outbound call for the hackathon;
-- visible automated-voice disclosure;
-- recordings disabled by default;
-- redacted logs and local transcripts;
-- idempotent call creation and a local kill switch.
+## Definition of done
 
-## Hackathon definition of done
-
-The project passes only when:
-
-- Fredo is published and verified on Ginse;
-- a fresh bootstrap task obtains the Fredo plan from Ginse and installs it;
-- a newly started Codex task loads the Fredo plugin;
-- the reference Mac installs the pinned local runtime;
-- `fredo doctor --json` is green;
-- Codex previews and confirms a call;
-- the judge's real phone rings from the verified number;
-- local AI sustains a bidirectional conversation;
-- the result returns to Codex;
-- a second call downloads zero model or runtime bytes;
-- the evidence bundle in [`GOAL.md`](GOAL.md) is complete.
+The project passes only when the exact candidate bytes complete the staged acceptance cycle in [`GOAL.md`](GOAL.md): contracts, one-prompt clean bootstrap, 100-turn local benchmark, safety and crash tests, five controlled calls, one real jury call, evidence graph, Ginse verification, and promotion to matching public Git and Ginse releases.
 
 ## Repository map
 
 ```text
-GOAL.md                    Measurable completion contract
-ROADMAP.md                 Product and implementation roadmap
-docs/ARCHITECTURE.md       Component roles and boundaries
-docs/BOOTSTRAP.md          Ginse-to-local bootstrap contract
-docs/TELEPHONY.md          Media and PSTN fallback ladder
-docs/GINSE.md              Marketplace action and privacy boundary
-docs/STACK-CANDIDATES.md   Verified research notes and unresolved choices
+GOAL.md                    Normative acceptance specification
+ROADMAP.md                 Evidence-ordered implementation roadmap
+docs/ARCHITECTURE.md       Non-normative component hypothesis
+docs/BOOTSTRAP.md          First-run and recovery design
+docs/TELEPHONY.md          Telecom and media boundary
+docs/GINSE.md              Single marketplace action contract
+docs/STACK-CANDIDATES.md   Verified research and open choices
 docs/decisions/            Accepted architectural decisions
-deploy/upstreams.lock.json Pinned source candidates
-scripts/clone-upstreams.sh Reproducible development clones
+deploy/upstreams.lock.json Pinned source candidates, not a runtime manifest
+voice-clone-poc/           Independent stretch experiment
 ```
 
 ## Development source bundle
@@ -189,8 +128,6 @@ cd 42hackathon
 ./scripts/clone-upstreams.sh core
 ```
 
-This clones pinned development sources into the ignored `.upstreams/` directory. It is not the Fredo end-user installer.
+This clones pinned development sources into `.upstreams/`. It is not the Fredo installer and does not prove runtime readiness.
 
-See [`docs/STACK-CANDIDATES.md`](docs/STACK-CANDIDATES.md) before promoting an experimental component into the reference runtime.
-
-Fredo is licensed under [Apache-2.0](LICENSE). Third-party source and model licenses remain their own and must be reviewed before redistribution.
+Fredo is licensed under [Apache-2.0](LICENSE). Third-party source and model licences remain their own and must be reviewed before redistribution.

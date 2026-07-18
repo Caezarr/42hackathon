@@ -1,90 +1,52 @@
 # Fredo — le téléphone local de Codex
 
-**On le découvre dans Ginse. On l'installe sur son Mac. On téléphone depuis Codex.**
+**On le découvre dans Ginse. On écrit un prompt. Un vrai téléphone sonne.**
 
-Fredo est une capacité téléphonique générique et locale pour Codex. Une fois Fredo installé, une demande devient un appel réel, prévisualisé et confirmé, mené par des modèles tournant chez l'utilisateur, puis un résultat structuré revient dans la même tâche Codex.
+Fredo doit transformer une seule demande Codex en installation locale épinglée, aperçu et confirmation d'appel, conversation menée par des modèles locaux, puis résultat structuré dans la même tâche.
 
-Le moment hackathon est simple : partir de Ginse, installer Fredo localement et faire sonner le vrai téléphone d'un membre du jury depuis un numéro vérifié.
+## État réel
 
-## État actuel
+Fredo n'est **pas encore implémenté de bout en bout**. Le dépôt contient le contrat, la roadmap, les recherches d'architecture, des sources épinglées et un [POC indépendant de clonage vocal](voice-clone-poc/README.md). Il n'existe encore ni plugin Fredo, ni runtime, ni provider Ginse, ni gateway télécom, ni preuve d'appel PSTN.
 
-Le dépôt contient le contrat produit, l'architecture cible, les sources épinglées et la roadmap. L'appel de bout en bout n'est **pas encore implémenté**.
+- [`GOAL.md`](GOAL.md) est la spécification normative.
+- [`ROADMAP.md`](ROADMAP.md) ordonne l'implémentation par preuve.
 
-- [`GOAL.md`](GOAL.md) définit les critères mesurables de réussite.
-- [`ROADMAP.md`](ROADMAP.md) ordonne le travail et les preuves attendues.
+## Expérience jury
 
-Un [POC autonome de clonage vocal local](voice-clone-poc/README.md) permet de tester séparément un échantillon WAV et la génération d'une phrase française avec Chatterbox Multilingual V3.
+Le juge écrit une fois :
 
-## Parcours
+> « Utilise Ginse pour préparer Fredo, puis appelle `<PHONE_E164>`. Ce numéro appartient à un juge consentant. Présente Fredo en français, annonce immédiatement que tu es une voix synthétique automatisée, demande si la démo fonctionne, puis rapporte la réponse ici. »
 
-```text
-Ginse
-  -> plan de bootstrap Fredo versionné
-  -> plugin et skill Codex
-  -> CLI et daemon Fredo locaux
-  -> IA vocale locale
-  -> transport SIP de l'utilisateur
-  -> téléphone réel
-  -> résultat dans Codex
-```
+Le parcours peut demander les autorisations Codex/macOS déclarées et une confirmation d'appel native Fredo. Aucun terminal, secret à coller, fichier à éditer, prérequis manuel ou second prompt n'est permis.
 
-Ginse est la porte d'entrée, pas le backend d'appel. Il ne reçoit jamais le numéro, l'objectif de l'appel, les identifiants SIP, l'audio ou la transcription.
+Le premier appel reste dans la tâche de bootstrap : elle invoque directement l'exécutable `fredo`. Le plugin nouvellement installé n'est vérifié que dans une session suivante, conformément au cycle de chargement Codex.
 
-La première utilisation se fait en deux temps : une tâche de bootstrap part de Ginse et termine sur `fredo doctor`, puis une nouvelle tâche charge le plugin Fredo et réalise l'appel. Le petit provider HTTPS public de Ginse est obligatoire et hébergé par l'équipe ; il est distinct d'un éventuel edge télécom.
+## Ginse et accès télécom de démonstration
 
-Chaque installation possède ses modèles, ses données, son compte SIP ou sa SIM, son identité d'appelant et sa facture télécom. Fredo n'opère aucune plateforme d'appels mutualisée.
+Ginse est la porte d'entrée obligatoire, mais pas le backend d'appel. Son unique action reçoit un identifiant aléatoire indépendant du prompt et l'empreinte d'une clé locale créée avant l'appel. Elle renvoie un `BootstrapPlan` épinglé et une réclamation temporaire liée à cette clé, sans droit de numérotation. Le numéro et l'objectif de l'appel ne sont jamais envoyés à Ginse.
 
-## Intégration Codex
+Après installation, Fredo prouve la possession de la clé préengagée et échange la réclamation de façon idempotente contre une capacité liée au Mac. Une gateway SIP de l'équipe conserve notre credential opérateur et impose côté serveur les plafonds d'émission, de dépense, de tentatives, de durée, de concurrence, de destination exacte et de révocation. Les juges utilisent donc notre accès pendant le hackathon sans recevoir la clé maître. Le BYOK vient après.
 
-Fredo est distribué comme plugin Codex :
+## Frontière locale honnête
 
-- une skill pilote le parcours utilisateur ;
-- la CLI `fredo` est le contrat local canonique ;
-- `fredod` gère les appels longs et l'état SQLite ;
-- un adaptateur MCP STDIO peut fournir des outils typés, sans logique métier propre.
+- STT, raisonnement vocal, TTS, état et transcript tournent sur le Mac.
+- Aucun audio n'est envoyé à Codex, Ginse ou une API d'inférence hébergée.
+- Codex hébergé peut orchestrer le bootstrap.
+- Ginse/provider sont des dépendances de bootstrap.
+- Gateway, opérateur et PSTN restent les frontières télécom nécessaires.
+- La gateway peut relayer SIP/RTP, mais n'enregistre pas l'audio et ne reçoit ni prompt, ni transcript, ni état du modèle.
 
-La démo utilise Codex CLI avec un fournisseur OSS local. Après bootstrap, aucun fournisseur hébergé de STT, LLM, TTS ou agent vocal n'est nécessaire.
-
-## Machine de référence
-
-Le seul profil obligatoire pendant le hackathon est le Mac inspecté : Apple M4 Pro, 24 Go de RAM, macOS 26.5, architecture `arm64`.
-
-L'inférence tourne nativement via Metal/MLX. Docker Compose peut emballer LiveKit, SIP, Asterisk et l'observabilité. Un edge Linux public n'est ajouté que si le NAT ou l'opérateur le rend nécessaire.
-
-## Stack cible
+## Stack expérimentale
 
 ```text
-Fredo -> SQLite -> Pipecat -> modèles locaux
-      -> LiveKit -> LiveKit SIP -> Asterisk -> trunk SIP -> jury
+Fredo -> état local durable -> Pipecat -> modèles locaux
+      -> LiveKit -> LiveKit SIP -> Asterisk/gateway -> opérateur -> téléphone
 ```
 
-- Moshi-MLX est un mode full-duplex expérimental.
-- PyVoIP est un outil de diagnostic SIP/RTP.
-- Le clonage vocal est un bonus ; une voix locale générique reste obligatoire.
+Cette stack est une hypothèse. Toute couche peut être remplacée si les invariants et les gates du [`GOAL.md`](GOAL.md) restent vrais. Moshi, PyVoIP et le clonage vocal restent hors du chemin critique.
 
-## Garde-fous
+## Réussite
 
-- confirmation explicite à usage unique ;
-- numéro appelant vérifié par l'opérateur ;
-- aucun spoofing ou appel en masse ;
-- blocage des urgences, numéros surtaxés et codes courts ;
-- annonce du caractère automatisé de la voix ;
-- enregistrement désactivé ;
-- logs expurgés et données locales ;
-- un seul appel sortant actif pour la démo.
-
-## Réussite du hackathon
-
-Fredo passe lorsque :
-
-1. l'app Ginse est publiée et vérifiée ;
-2. une tâche de bootstrap récupère le plan Fredo depuis Ginse ;
-3. le Mac installe le runtime local épinglé ;
-4. une nouvelle tâche Codex charge le plugin Fredo ;
-5. Codex affiche puis confirme l'appel ;
-6. le téléphone réel du jury sonne ;
-7. la conversation bidirectionnelle fonctionne avec l'IA locale ;
-8. le résultat revient dans Codex ;
-9. un second appel ne télécharge aucune dépendance.
+Le projet passe seulement lorsque les mêmes octets réussissent : bootstrap propre depuis un prompt, benchmark local de 100 tours, tests de sécurité et de crash, cinq appels contrôlés, un appel réel au jury, vérification Ginse, graphe de preuves, puis promotion vers des releases Git et Ginse correspondantes.
 
 [Retour au README anglais](README.md)

@@ -17,7 +17,7 @@ Observed locally:
 | Rust | 1.94.1 |
 | Docker daemon | not running during the audit |
 
-The bootstrap must create its own supported Python environment and treat the container runtime as a doctor check, not an assumption.
+If the selected runtime uses Python, bootstrap must install an isolated supported environment. A container runtime is neither assumed nor required by the judged clean-machine path.
 
 ## Codex surfaces
 
@@ -34,7 +34,7 @@ Fredo therefore uses:
 1. plugin + skill for distribution and workflow;
 2. local CLI as the canonical implementation contract;
 3. optional STDIO MCP for typed calls;
-4. Codex `--oss` for the zero-hosted-inference demo.
+4. optional Codex `--oss` profile for a stricter local-control-plane experiment, not for judged bootstrap.
 
 References:
 
@@ -100,8 +100,8 @@ Candidate roles:
 | --- | --- | --- |
 | Pipecat | conversation graph and interruption | keep if local voice loop passes |
 | LiveKit | media room and supervision | removable if it blocks the call |
-| LiveKit SIP | bridge room media to SIP | direct-to-carrier fallback |
-| Asterisk | carrier behavior, DTMF, CDR, future hardware | removable if direct SIP is more reliable |
+| LiveKit SIP | bridge room media to SIP | must terminate through the policy-enforcing gateway |
+| Asterisk | candidate gateway for carrier behavior, policy, DTMF and CDR | replaceable only by another server-side policy gateway |
 | PyVoIP | diagnostic SIP/RTP path | never the only judged path |
 
-The winner is the smallest combination that completes two consecutive controlled PSTN calls and meets [`GOAL.md`](../GOAL.md).
+The winner is the smallest combination that passes the five controlled PSTN calls, policy-bypass tests, and every applicable gate in [`GOAL.md`](../GOAL.md).

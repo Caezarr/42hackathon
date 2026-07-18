@@ -1,263 +1,245 @@
-# Fredo product roadmap
+# Fredo delivery roadmap
 
-This roadmap orders work by proof, not architectural prestige. The current goal is defined in [`GOAL.md`](GOAL.md).
+Status: delivery order derived from [`GOAL.md`](GOAL.md) `0.3-draft`.
 
-## Product direction
+`GOAL.md` is normative. This roadmap orders the proofs needed to satisfy it; it does not relax its invariants, service levels, or gates.
 
-Fredo is a generic local phone capability for Codex.
+## Current truth
 
-The product enters through Ginse, installs on the user's machine, and then performs calls locally through the user's own verified telecom transport. The hackathon reference is one Apple M4 Pro Mac with 24 GB RAM and one outbound SIP trunk.
+The repository does not yet contain an end-to-end Fredo product. It contains the acceptance specification, architecture research, pinned upstream candidates, and an isolated Windows-oriented voice-cloning experiment. The Codex plugin, `fredo` runtime, Ginse provider, demo-access authority, policy gateway, local realtime loop, and real-call evidence are all still missing.
 
-The intentionally excessive target is:
+No phase is complete because its document exists. A phase exits only with the stated executable evidence against one identified release candidate.
+
+## Frozen judged path
+
+The judge types this single parameterized message:
+
+> “Use Ginse to prepare Fredo, then call `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in French, disclose immediately that you are an automated synthetic voice, ask whether the demonstration works, then return the answer here.”
+
+The same Codex task MUST:
+
+1. create a protected device key and invoke Fredo's single Ginse action with its thumbprint and a locally generated `install_id`;
+2. install and verify the pinned Fredo release after the declared approval;
+3. redeem the returned non-dialing `LeaseClaim` for an install-bound gateway capability;
+4. invoke the installed `fredo` executable directly;
+5. show the native call preview and obtain its one-use confirmation;
+6. place the call through the mandatory demo policy gateway;
+7. return the structured result after hangup.
+
+The phone number remains local and never enters Ginse. A fresh Codex task is used only afterward to verify that the installed plugin is discoverable; it is not part of first-call bootstrap.
+
+## Delivery principles
+
+- Ginse is the mandatory discovery and bootstrap front door from the first vertical slice.
+- The exact schemas and state machines in `GOAL.md` precede implementation.
+- Call-side STT, dialogue inference, TTS, state, and transcript processing run locally on the Mac.
+- Hosted Codex may orchestrate bootstrap; no call audio enters Codex, Ginse, or hosted inference.
+- The team carrier master credential remains at the gateway. The client receives only a short-lived, install-bound capability.
+- The gateway is mandatory for the judged flow because it enforces policy even if the local client is bypassed.
+- Pipecat, LiveKit, Asterisk, SQLite, Python, Docker, and individual models are replaceable hypotheses, not milestones.
+- Each phase ends with hashed evidence linked to a release SHA and configuration digest.
+
+## Gate traceability
+
+| Phase | Normative acceptance owned |
+| --- | --- |
+| P0 | `GP.*`, `G0.1`, `G0.3` |
+| P1 | `G0.2`, `G0.4`, server-control prerequisites for `G3.4`–`G3.5` |
+| P2 | `G0.5`, `G1.*`, bootstrap portion of `G5.2`–`G5.3` |
+| P3 | `G2.*` |
+| P4 | `G3.*`, `G5.1`, local portions of `G5.3`–`G5.4` |
+| P5 | `G4.*`, telecom portions of `G5.3`–`G5.4` |
+| P6 | `G5.5`, `G6.*`, final cross-gate verification |
+
+## P0 — Preconditions, contracts, and trust
+
+### Deliver
+
+- Freeze the exact one-prompt text and France demo policy.
+- Record the M4 Pro, 24 GB, macOS 26.5 clean-machine fixture and qualified network.
+- Prove one verified outbound caller identity, two consenting controlled destinations, a EUR 50 account cap, and an operator kill switch.
+- Select a server-enforced SIP policy gateway path.
+- Add JSON Schemas and positive/negative vectors for every interface listed in `GOAL.md` Section 7.
+- Document trust roots, signing identities, canonical JSON hashing, downgrade rules, and credential boundaries.
+
+### Exit evidence
+
+- `GP` and the contract portion of `G0` are executable, not aspirational.
+- Malformed and unknown security-boundary fields are rejected.
+- Destination and intent are structurally absent from `BootstrapRequest` and `BootstrapPlan`.
+- Carrier and gateway diagnostics prove caller ID, quota enforcement, spend cap, revocation path, and zero recording.
+
+### Cut line
+
+Do not tune voice models before carrier readiness, gateway enforcement, and schemas are proven.
+
+## P1 — Ginse, release plan, and demo access
+
+### Deliver
+
+- One publicly reachable HTTPS `/run` provider behind an unlisted or clearly labelled staging Ginse app version; the marketplace listing remains non-public until G6 promotion.
+- Ginse Ed25519 bearer verification, atomic idempotency, stable operation IDs, exact replay, and divergent-replay rejection.
+- A schema-valid `BootstrapPlan` pinned to a full repository SHA and signed manifest digest.
+- A one-time non-dialing `LeaseClaim`, issued for 45 minutes so a conforming 30-minute cold bootstrap leaves redemption margin, bound to `install_id`, device-key thumbprint, release, and policy.
+- A demo-access authority with durable idempotent redemption, proof of possession, exact replay after response loss, and only a short-lived, install/device/release/policy-bound gateway capability.
+- A protected signing key created before `/run` plus a 128-bit CSPRNG `install_id` generated inside the Ginse shim, with fixed encodings and prompt-taint tests.
+- Server-side redaction and canary tests proving no carrier master secret or call-derived bootstrap value enters Ginse, logs, or client storage.
+
+### Exit evidence
+
+- Ginse authentication, schema, replay, redaction, claim-first theft, proof-of-possession, redemption response-loss/replay, expiry, binding, and downgrade tests pass.
+- Captured Ginse payloads contain no destination, intent, caller identity, audio, transcript, or call result.
+- Direct use of a stolen or mismatched claim/capability fails closed.
+- Bypassing the local Fredo client does not bypass gateway policy.
+
+### Cut line
+
+The provider resolves bootstrap only. Calling, status, cancellation, and results MUST NOT become extra Ginse actions.
+
+## P2 — Signed bootstrap and same-task continuation
+
+### Deliver
+
+- Signed/notarized macOS release assets, signed `ArtifactManifest`, SBOM, and build provenance.
+- Signed, versioned `BootstrapApprovalEnvelope` pinned by the Ginse app metadata, with origin, digest, signature, downgrade, and plan-narrowing verification.
+- Content-addressed, resumable download and verified activation.
+- Packaged mandatory runtime with no Homebrew, Docker Desktop, Python, source checkout, reboot, or interactive third-party EULA prerequisite.
+- Installable Codex marketplace/plugin identity and native `fredo` executable.
+- Structured `bootstrap plan`, `bootstrap apply`, lease redemption, and named `doctor` checks.
+- Bootstrap continuation that invokes `fredo` directly in the original Codex task.
+
+### Exit evidence
+
+- Cold interrupted, cold uninterrupted, and warm/recovery scenarios from `GOAL.md` Section 11.4 pass.
+- Each qualified cold run completes within 30 minutes; the warm run transfers zero artifact body bytes.
+- Partial or substituted bytes never activate, and manifest sizes bound disk use.
+- `doctor --offline` marks network checks `not_run` rather than healthy.
+- The original task reaches the local call preview without a shell command or second prompt.
+- A later fresh Codex session discovers the installed plugin.
+
+### Cut line
+
+The mandatory path may support only the frozen reference profile. Portability work waits.
+
+## P3 — Local conversation and resource proof
+
+### Deliver
+
+- A repeatable local voice benchmark for viable STT/dialogue/TTS and full-duplex candidates.
+- PSTN codec adaptation and interruption handling.
+- Deny-by-default egress instrumentation proving live inference locality.
+- Selection of one reference engine; every other engine remains optional.
+
+### Exit evidence
+
+- 100 measured turns: 10 sessions × 10 turns after two labelled warm-up turns per session.
+- Median turn latency is at most 1.5 seconds; observed nearest-rank P95 is at most 2.5 seconds.
+- 30/30 scripted barge-ins stop outbound speech within 500 ms.
+- No hosted call-side inference request occurs during the measured window.
+- No OOM or eviction, memory pressure stays green, swap growth stays below 1 GiB, and the five-minute idle `phys_footprint` slope/median bounds in `GOAL.md` pass.
+- Raw observations, fixed corpus, model revisions, codec, thermal state, and bootstrap confidence intervals are retained.
+
+### Cut line
+
+Voice cloning and alternate engines stay off the critical path until the reference generic voice passes `G2`.
+
+## P4 — Durable call control and safety
+
+### Deliver
+
+- Durable bootstrap and call state machines exactly matching `GOAL.md` Section 8.
+- Canonical `DialRequest`, native `DialPreview`, and helper-signed, server-verifiable, single-use 60-second `DialAuthorization` binding every request field.
+- At-most-once dial creation under concurrent retries and process crashes.
+- Durable `CANCEL_REQUESTED`, `HANGUP_COMMITTED`, and `RECONCILING` transitions, ending in an observed terminal state or `UNKNOWN_TERMINAL` without blind redial.
+- Local policy checks plus mandatory server-side quota, destination, concurrency, duration, spend, and revocation enforcement.
+- Redacted structured result and evidence export.
+
+### Exit evidence
+
+- Reject, expiry, mutation, blocked destination, policy mismatch, and pre-commit cancellation each produce zero SIP `INVITE`; post-commit cancellation emits only idempotent `CANCEL`/`BYE`.
+- Capability-plus-device-key bypass without a valid helper attestation is rejected at the gateway.
+- Parallel and repeated starts create at most one carrier call per idempotency key.
+- Process-kill tests at every non-terminal state produce only legal recovery transitions.
+- Claim/capability issuance, per-device, per-destination, per-profile, and global attempt/completion ceilings remain enforced when the client is bypassed or reinstalled.
+- Revocation denies new attempts within 30 seconds; hard hangup occurs at 180 seconds.
+- Remote speech cannot authorize a call, change destination or policy, invoke a tool, or disclose a secret.
+
+## P5 — Real telephony qualification
+
+### Deliver
+
+- One promoted media path from local Fredo inference through the policy gateway, verified carrier, and PSTN.
+- Verified caller presentation, bidirectional audio, interruption, DTMF/event correlation, cancellation, hangup, and durable result.
+- Synthetic-voice disclosure as the first substantive outbound audio and within five seconds of connection.
+
+### Exit evidence
+
+- 5/5 controlled calls ring, connect, disclose, exchange three intelligible facts in both directions, handle one interruption, and return a result.
+- Each controlled call remains connected for at least 90 seconds.
+- Every controlled call has `ring_setup <= 20 s` and `result_latency <= 5 s`.
+- Two independent listeners mark all scripted facts intelligible in both directions.
+- No Fredo or gateway audio recording exists.
+- The jury call then succeeds once without operator workaround.
+
+### Cut line
+
+Debug one media path at a time. Disable failed alternatives behind feature flags.
+
+## P6 — Acceptance, promotion, and public proof
+
+### Deliver
+
+- Complete evidence bundle and validating `EvidenceIndex`.
+- Staging Ginse app/version for release-candidate verification.
+- Uncut one-prompt demo recording from the clean fixture.
+- Immutable public Git release and Ginse app version.
+- Production smoke call using the exact published bytes.
+
+### Promotion sequence
 
 ```text
-Ginse -> Codex plugin -> Fredo CLI/daemon -> SQLite -> Pipecat
-      -> native local voice models -> LiveKit -> Asterisk -> SIP -> PSTN
+candidate commit
+  -> signed/notarized assets + SBOM + provenance
+  -> staging Ginse verification
+  -> clean-machine, safety, local-model and telecom acceptance
+  -> immutable Ginse version + public Git release
+  -> production smoke call of the exact published version
 ```
 
-Every layer must earn its place with a measured improvement or operational necessity.
-
-## Delivery rules
-
-- Ginse is present in the first vertical slice, not added at the end.
-- The CLI/domain contract is canonical; the skill and optional MCP adapter remain thin.
-- Inference runs natively on Apple Silicon when containers would lose Metal/MLX performance.
-- Docker Compose packages the mandatory public Ginse provider and may package media, telecom and observability.
-- The public Ginse provider and an optional public telecom edge are separate deployment roles, even if the team colocates them.
-- One proven call path beats several half-working transports.
-- Each phase ends with stored evidence before the next phase starts.
-- Every implementation decision or replaced assumption gets a short ADR.
-
-## P0 — Contract, machine and carrier
-
-### Deliver
-
-- Fredo name, product boundary and [`GOAL.md`](GOAL.md).
-- JSON schemas for `BootstrapPlan`, call preview, confirmation and terminal result.
-- Inventory of the M4 Pro reference Mac.
-- Working SIP account, verified caller number and controlled destination.
-- Chosen team-controlled public HTTPS Docker host and DNS name for the Fredo Ginse provider.
-- Repository marketplace shape for an installable Fredo Codex plugin.
-- Ginse action contract: `platform profile -> BootstrapPlan`.
-
 ### Exit evidence
 
-- Schemas validate one safe example and reject malformed input.
-- SIP credentials register using a throwaway diagnostic client.
-- A human-originated test call reaches the controlled phone from the verified number.
-- The exact Mac, available disk, Python strategy and container runtime status are recorded.
-
-### Cut line
-
-Do not tune models before the carrier account and Ginse action shape are proven.
-
-## P1 — Ginse-to-local vertical slice
-
-### Deliver
-
-- Minimal public Fredo Ginse provider with one fixed-price `/run` action.
-- Ed25519 bearer verification and durable Ginse idempotency.
-- Schema-valid `BootstrapPlan` pinned to a Fredo commit and manifest digest.
-- Minimal `.codex-plugin/plugin.json`, Fredo skill and repo marketplace entry.
-- `fredo bootstrap plan`, `fredo bootstrap apply` and `fredo doctor --json` stubs.
-
-### Exit evidence
-
-From a fresh Codex task:
-
-1. invoke the published Ginse action;
-2. receive and validate the plan;
-3. install the Fredo plugin from the pinned repository revision;
-4. run the local bootstrap stub after approval;
-5. see a structured doctor result.
-
-No phone number or call data may appear in the Ginse request or response.
-
-### Cut line
-
-The first implementation may support only `mac-m4pro-24gb` and the team machine. General installers are explicitly deferred.
-
-## P2 — Voice-engine shootout
-
-### Deliver
-
-A repeatable local benchmark harness for:
-
-- modular path: streaming STT -> compact local LLM -> generic local TTS;
-- Moshi-MLX q4 full-duplex experiment;
-- resampling between PSTN 8 kHz G.711 audio and each engine's native sample rate.
-
-Reference candidates:
-
-- STT: whisper.cpp/Metal or an equivalent MLX implementation;
-- LLM: a compact model served by MLX, Ollama or LM Studio;
-- TTS: Kokoro with Piper as the reliability fallback;
-- full duplex: [Moshi MLX](https://github.com/kyutai-labs/moshi), behind a feature flag.
-
-The spoken candidate “Miro 2.5” was not found in the primary repository search. It is treated as an unresolved name, possibly Moshi, and must not become a dependency until the exact project is confirmed.
-
-### Exit evidence
-
-- 20 measured turns for each viable path.
-- Load time, peak memory, STT latency, first token, first audio and interruption latency recorded.
-- One engine selected as `reference`; every other engine becomes optional.
-- Reference path meets the latency and memory gates in [`GOAL.md`](GOAL.md).
-
-### Cut line
-
-Moshi leaves the critical path immediately if it exceeds memory or latency limits. Voice cloning is not evaluated until a generic TTS call succeeds.
-
-## P3 — Durable Fredo core
-
-### Deliver
-
-- Native `fredo` CLI and `fredod` daemon communicating over a Unix socket.
-- SQLite WAL database and append-only call event journal.
-- State machine:
-
-```text
-draft -> awaiting_confirmation -> ready -> dialing -> ringing
-      -> connected -> completed | failed | cancelled
-```
-
-- One-use confirmation bound to destination, intent, caller identity and duration.
-- Idempotent prepare/start/cancel/result operations.
-- Redacted structured logs.
-
-### Exit evidence
-
-- A pending job survives daemon restart.
-- Rejecting or expiring confirmation produces zero transport attempts.
-- Reusing an idempotency key cannot create a duplicate call.
-- Blocked-number fixtures fail before the transport adapter is called.
-- CLI commands return schema-valid JSON.
-
-## P4 — The absurd phone sandwich
-
-### Hero path
-
-```text
-Pipecat
-  <-> LiveKit room
-  <-> LiveKit SIP
-  <-> Asterisk PJSIP
-  <-> verified carrier trunk
-  <-> real phone
-```
-
-Roles stay explicit:
-
-- Pipecat: dialogue graph, VAD, interruption and voice-engine adapters.
-- LiveKit: realtime media room and local supervision.
-- Asterisk: carrier quirks, codecs, DTMF, call detail and future SIM/Bluetooth transports.
-- The Mac: Fredo state and native inference.
-
-[PyVoIP](https://github.com/tayler6000/pyVoIP) is a diagnostic adapter only. Its documented PCMA/PCMU 8 kHz and telephone-event support make it useful for a quick SIP/RTP spike, but it does not replace the judged transport.
-
-### Fallback ladder
-
-1. LiveKit SIP directly to the carrier trunk.
-2. Pipecat through Asterisk without LiveKit supervision.
-3. PyVoIP only as a redacted lab diagnostic, never as an excuse to skip the real call.
-
-A public telecom edge and WireGuard are introduced only if the carrier/NAT path requires them. The first attempt runs locally on the Mac and its Docker runtime.
-
-### Exit evidence
-
-- Two consecutive calls reach a controlled real phone.
-- Warm ring time is at most 20 seconds after confirmation.
-- Bidirectional audio remains usable for 90 seconds.
-- DTMF, answer, interruption and hangup events share one `call_id`.
-- Terminal result persists within five seconds of hangup.
-
-### Cut line
-
-Never debug two broken telecom paths at once. Promote the first path that completes two consecutive calls; disable the rest behind feature flags.
-
-## P5 — Codex owns the experience
-
-### Deliver
-
-- Fredo skill covering prepare, preview, confirm, start, status, cancel and result.
-- Natural-language call flow that stays inside one Codex task after the plugin is loaded.
-- Local CLI invocation as the mandatory adapter.
-- Optional STDIO MCP tools over the same domain service if they reduce friction.
-- Hackathon Codex CLI profile using `--oss` with a local provider.
-
-### Exit evidence
-
-- No manual shell command is typed during the judged flow.
-- Codex displays the resolved destination and intent before confirmation.
-- Codex can cancel before answer and retrieve the final result after hangup.
-- Raw audio never enters Codex.
-- Network capture shows no hosted AI inference during the call.
-
-## P6 — Publish and rehearse
-
-### Deliver
-
-- Cold bootstrap implementation for the pinned Mac profile.
-- Resumable downloads and warm zero-download reuse.
-- Public Ginse manifest served unchanged and verified.
-- Published Ginse listing `Fredo — 42hackathon`.
-- Operator runbook, troubleshooting guide and evidence bundle.
-- A single uncut demo script starting from Ginse discovery.
-
-### Exit evidence
-
-- Every mandatory gate in [`GOAL.md`](GOAL.md) passes twice.
-- A bootstrap task completes Ginse -> install -> doctor without source edits.
-- A newly started Codex task loads the installed plugin and completes the call flow.
-- The first real call and a second warm call both complete.
-- The team can recover from failed model, media and trunk health checks using the documented fallback ladder.
+- `GP` through `G6` pass and every result resolves through the hashed evidence index.
+- Source, assets, models, provider image, gateway image, policy, Ginse version, and evidence are joined by cryptographic digests.
+- The promoted bytes equal the accepted bytes and the worktree is clean.
+- The public copyable prompt completes the production smoke call.
 
 ## Hackathon cut line
 
 ### Never cut
 
-- Ginse discovery and verified bootstrap-plan action;
-- local installation on the reference Mac;
-- local voice inference;
-- explicit confirmation;
-- verified caller identity;
-- real judge phone call;
-- bidirectional audio;
-- structured result in Codex.
+- Ginse discovery and the single verified bootstrap action;
+- exact one-prompt, same-task first-call flow;
+- signed bootstrap integrity and clean-machine installation;
+- local live conversation inference;
+- native exact-call confirmation and at-most-once behavior;
+- mandatory server-enforced demo policy gateway;
+- verified caller identity, disclosure, real phone call, and structured result;
+- acceptance-to-release digest equivalence.
 
 ### Cut in this order
 
 1. voice cloning;
-2. Moshi mode;
-3. dashboard and custom UI;
-4. PyVoIP outside diagnostics;
-5. Asterisk if LiveKit SIP works directly;
-6. LiveKit supervision if Asterisk works directly;
-7. public telecom edge if local SIP works; never cut the public Ginse provider;
-8. multiple models, transports, languages or machines;
-9. rollback, signed releases and air-gap bundles.
+2. alternate/full-duplex voice engines;
+3. dashboard and handset-side demo UI;
+4. optional MCP adapter;
+5. redundant media transports;
+6. additional languages, platforms, carriers, and profiles;
+7. BYOK, inbound calls, and generalized multi-user operation.
 
 ## After the hackathon
 
-### V0.2 — Installable by another Mac user
-
-- tested clean-machine install;
-- immutable runtime/model manifest;
-- compatibility matrix for Apple Silicon memory tiers;
-- upgrade and rollback;
-- local diagnostics export with automatic redaction.
-
-### V0.3 — More transports
-
-- GSM/LTE-to-SIP gateway;
-- Android Bluetooth through Asterisk;
-- inbound calls;
-- optional Linux edge appliance.
-
-### V1 — Personal calling platform
-
-- stable public Fredo plugin distribution;
-- multiple local profiles and languages;
-- policy packs and contact vault;
-- optional consented voice cloning;
-- local observability and evaluation suite;
-- no central Fredo call execution.
+- BYOK and per-install carrier ownership;
+- broader Apple Silicon compatibility, upgrade, and rollback;
+- more transports, inbound calls, and policy packs;
+- consented voice cloning;
+- production multi-tenancy, compliance work, and longer-lived operations.

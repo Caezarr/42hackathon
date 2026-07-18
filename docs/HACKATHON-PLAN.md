@@ -7,13 +7,17 @@ The measurable completion contract is [`../GOAL.md`](../GOAL.md).
 ## Must-win sequence
 
 ```text
-Ginse bootstrap-plan action
-  -> Codex installs Fredo locally
-  -> local voice loop
-  -> confirmed verified SIP call
+one judge prompt with <PHONE_E164>
+  -> Ginse bootstrap action
+  -> Codex installs the signed Fredo candidate locally
+  -> Fredo redeems bounded demo access
+  -> local voice loop passes doctor
+  -> native preview and one-use confirmation
+  -> policy-gateway-enforced SIP call
   -> judge phone rings
   -> result returns to Codex
-  -> second call downloads nothing
+  -> fresh session verifies the installed plugin
+  -> exact accepted bytes are promoted to Git and Ginse
 ```
 
 ## Never cut
@@ -26,6 +30,8 @@ Ginse bootstrap-plan action
 - verified caller identity;
 - bidirectional audio;
 - structured result in Codex.
+- server-side spend, destination, rate, duration and revocation controls;
+- signed release assets, provenance and evidence linking tested bytes to published bytes.
 
 ## First features to cut
 
@@ -33,4 +39,5 @@ Ginse bootstrap-plan action
 - Moshi mode;
 - custom dashboard;
 - multiple transports and machines;
-- production rollback, signing and air-gap support.
+- production rollback and air-gap support;
+- BYOK and general-purpose carrier onboarding.

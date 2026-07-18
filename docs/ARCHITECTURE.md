@@ -1,241 +1,198 @@
 # Fredo architecture
 
-Status: target architecture. No end-to-end runtime exists yet.
+Status: non-normative architecture hypotheses for `GOAL.md` `0.3-draft`. No end-to-end runtime exists yet.
 
-## Invariants
+`GOAL.md` is authoritative. The components and technologies below are replaceable; they are acceptable only if they preserve every normative invariant and pass every acceptance gate.
 
-- Ginse is Fredo's required discovery and bootstrap entry point.
-- Calls execute on infrastructure owned by the installer.
-- Phone numbers, intents, credentials, audio and transcripts never transit through Ginse.
-- The CLI/domain layer is canonical; Codex adapters stay thin.
-- Live-call AI runs locally on the reference Mac.
-- The carrier is the only unavoidable external dependency during a public phone call.
-- Every side effect is confirmed, durable and idempotent.
+## Design constraints
+
+- Ginse is the mandatory discovery and bootstrap entry point.
+- Codex may use its hosted control plane for the initial prompt and bootstrap orchestration.
+- Live STT, dialogue inference, TTS, call state and transcript processing run on the judge's Mac.
+- Raw call audio never goes to Codex, Ginse, the Fredo provider, a model registry or hosted inference.
+- The Ginse provider, demo-access authority and SIP policy gateway are separate trust roles.
+- The SIP policy gateway is mandatory for the judged path, even when NAT does not require an edge.
+- The team carrier credential exists only behind the gateway; an installation receives a short-lived, bounded gateway capability.
+- Every dial requires a Fredo-owned native `DialPreview` and a one-use `DialAuthorization`.
+- State is durable and idempotent. An uncertain carrier outcome enters `RECONCILING`, may end in `UNKNOWN_TERMINAL`, and is never redialled blindly.
+- MCP, Pipecat, LiveKit, Asterisk, PyVoIP, SQLite, Docker, Python and any particular model are implementation hypotheses, not product requirements.
 
 ## System map
 
 ```mermaid
 flowchart TB
-    subgraph Public["Allowed public boundary"]
-      G["Ginse marketplace"]
-      R["Team-owned Fredo provider /run"]
-      GP["BootstrapPlan"]
-      CARRIER["Verified SIP carrier"]
-      G --> R
-      R --> GP
+    subgraph Control["Bootstrap control plane"]
+      CODEX["Codex hosted control plane"]
+      GINSE["Ginse marketplace"]
+      PROVIDER["Fredo provider: one /run action"]
+      PLAN["Signed BootstrapPlan + non-dialing LeaseClaim"]
+      CODEX --> GINSE
+      GINSE --> PROVIDER
+      PROVIDER --> PLAN
     end
 
-    subgraph Mac["Reference Apple Silicon Mac"]
-      C["Codex CLI --oss"]
-      PL["Fredo plugin + skill"]
-      MCP["Optional STDIO MCP"]
+    subgraph Mac["Judge Mac: call-side trust boundary"]
+      BOOT["Bootstrap shim + signed installer"]
+      PLUGIN["Fredo plugin + skill"]
       CLI["fredo CLI"]
-      D["fredod"]
-      DB["SQLite WAL"]
-      P["Pipecat"]
-      AI["Local voice engine"]
-      LK["LiveKit"]
-      LKSIP["LiveKit SIP"]
-      AST["Asterisk"]
+      UI["Native DialPreview / confirmation"]
+      DAEMON["fredod + durable state"]
+      AI["Local STT / dialogue / TTS"]
+      MEDIA["Local SIP/RTP adapter"]
 
-      C --> PL
-      PL --> CLI
-      PL -. typed tools .-> MCP
-      MCP --> CLI
-      CLI <--> D
-      D <--> DB
-      D <--> P
-      P <--> AI
-      P <--> LK
-      LK <--> LKSIP
-      LKSIP <--> AST
+      BOOT --> CLI
+      PLUGIN --> CLI
+      CLI <--> DAEMON
+      DAEMON <--> UI
+      DAEMON <--> AI
+      AI <--> MEDIA
     end
 
-    GP --> PL
-    AST <--> CARRIER
-    CARRIER --> PHONE["Judge phone"]
+    subgraph Telecom["Team telecom control plane"]
+      AUTH["Separate demo-access authority"]
+      GW["Mandatory SIP policy gateway"]
+      CARRIER["Verified team carrier account"]
+      AUTH -->|"bounded capability + revocation"| GW
+      GW <--> CARRIER
+    end
+
+    PLAN --> BOOT
+    BOOT -->|"one-time claim redemption"| AUTH
+    MEDIA <-->|"SIP/RTP only"| GW
+    CARRIER --> PHONE["Consenting judge phone"]
+    DAEMON -->|"redacted structured result"| CODEX
 ```
 
-The first telecom fallback may bypass Asterisk (`LiveKit SIP -> carrier`). The second may bypass LiveKit supervision (`Pipecat -> Asterisk`). A public telecom edge is introduced only when the carrier or NAT requires it. The small public Fredo provider is mandatory regardless and is a separate role.
+The media path may cross the gateway as SIP/RTP. That transit does not permit recording, transcription, hosted inference or retention. Prompts, model state, transcripts and summaries stay off the gateway.
 
-## Component responsibilities
+## Trust roles and responsibilities
 
-### Ginse resolver
+### Codex and the bootstrap shim
 
-One public fixed-price HTTPS action maps a small supported platform profile to a deterministic `BootstrapPlan`.
+The already-installed Ginse use capability invokes the single public Fredo action, validates its schema, and obtains a deterministic plan. The same Codex task downloads and verifies the release, runs the installed `fredo` executable directly, and completes the first call after the named approvals.
 
-The team hosts this minimal provider on a public HTTPS Docker host selected in P0. It stores provider authentication/idempotency state and bootstrap plans only. It may share a machine with a future telecom edge, but it has no access to SIP, contacts or call data.
+A plugin installed during that task is discoverable only from a fresh Codex session. Fresh-session discovery is a post-install verification, not a prerequisite for the first call. MCP remains optional and must not own business logic.
 
-It owns:
+Codex may orchestrate control actions and receive the final redacted result. It never receives raw call audio or the carrier credential.
 
-- Ed25519 bearer verification;
-- Ginse idempotency and stable operation IDs;
-- input/output schema validation;
-- immutable Fredo commit and manifest selection.
+### Ginse provider
 
-It never owns calls, local installation, contacts or telecom credentials.
+One fixed-price HTTPS action maps the allowlisted platform profile, an independently generated 128-bit CSPRNG `install_id`, and a protected device-key thumbprint to a deterministic `BootstrapPlan`. Before `/run`, the Ginse shim creates the key, emits the ID as exactly 22 and the SHA-256 thumbprint as exactly 43 unpadded base64url characters, and never accepts either from prompt or model data. The provider owns:
 
-### Codex plugin
+- Ginse Ed25519 bearer verification;
+- strict input/output schema validation;
+- atomic idempotency, exact replay and stable operation IDs;
+- immutable commit, release-manifest and plugin selection;
+- delivery metadata for a non-dialing `LeaseClaim` pre-bound to the install, device-key thumbprint, release, and policy.
 
-The plugin is the installable user-facing package. It contains:
+It never receives the destination, intent, caller identity, audio, transcript or result. It has no carrier credential and no dial authority.
 
-- a skill describing Fredo's safe workflow;
-- CLI bootstrap/invocation instructions;
-- optional `.mcp.json` wiring for a local STDIO adapter;
-- no model weights or secrets.
+### Demo-access authority
 
-Codex CLI supports local plugins, skills, local STDIO MCP servers and an OSS provider mode. The hackathon profile uses those local surfaces.
+This is a separate service and trust role from the Ginse provider. It verifies proof of possession for the precommitted device key and durably binds one canonical redemption fingerprint to a gateway capability covering installation ID, device public key, native-helper authorization-key thumbprint, release SHA, policy digest, and expiry. It stores the terminal result before reply, replays it exactly after response loss, and rejects divergent redemption.
 
-### `fredo` CLI
+It owns lease issuance, per-install revocation and capability rotation. It receives no prompt, transcript, model state or carrier master credential. Claim TTL is exactly 45 minutes, leaving redemption margin after the bounded cold bootstrap; capability TTL is at most eight hours and never exceeds the judging window. Gateway use also requires device-key proof of possession, so the capability is not a transferable bearer credential.
 
-The CLI is the stable automation boundary for Codex, tests and humans. Every non-interactive command supports JSON output and meaningful exit codes.
+### SIP policy gateway
+
+The gateway is mandatory for the team-funded judged path. It is the only Fredo component allowed to use the shared team carrier account. It validates install-bound capabilities and enforces, independently of the Mac:
+
+- destination allowlists and blocked classes;
+- per-install and global concurrency;
+- attempt rate and completed-call quota;
+- call-duration and judging-window limits;
+- revocation and the operator kill switch.
+
+The gateway may relay SIP/RTP and normalize carrier-specific signalling. It must not store recordings, prompts, transcripts, model state or summaries. Its logs and CDR evidence are redacted.
+
+### Native confirmation surface
+
+A signed local helper creates and protects a separate authorization signing key, whose thumbprint is registered during demo-access redemption and bound into the gateway capability. It renders the canonical `DialPreview`: full destination, verified caller identity, purpose, synthetic-voice disclosure, duration cap and policy/cost profile. Approval produces a helper-signed, single-use `DialAuthorization` that expires within 60 seconds and binds the canonical hash of every `DialRequest` field, capability, policy, release, and authorization-key thumbprint.
+
+The gateway verifies the helper signature and all bindings and atomically consumes the authorization ID with the dial idempotency key before any carrier attempt. Capability plus device-key proof alone cannot dial. This interaction is distinct from Codex's download/write approval. Rejection, expiry, request mutation, or cancellation before `DIAL_COMMITTED` produces zero SIP `INVITE`; a later cancellation can emit only the persisted path's `CANCEL`/`BYE`, never a new `INVITE`.
+
+### `fredo` CLI and `fredod`
+
+The CLI is the stable automation boundary for Codex, tests and humans. Candidate commands are:
 
 ```text
 bootstrap plan|apply
-doctor
+doctor [--offline]
 call prepare|confirm|start|status|cancel|result
 ```
 
-The CLI performs no long-running media work itself. It calls `fredod` over a local Unix socket.
+Every non-interactive command emits structured output and meaningful exit codes. `fredod` owns durable state transitions, idempotency, confirmation consumption, policy checks, media lifecycle, recovery and redacted result emission. The storage engine is selected by evidence; SQLite WAL is a plausible single-install candidate, not a requirement.
 
-### Optional MCP adapter
+### Local conversation and media
 
-The STDIO server mirrors the CLI/domain operations as typed tools. It contains no transport, confirmation, storage or call logic. Removing it must not remove any Fredo capability.
-
-### `fredod`
-
-The daemon owns:
-
-- state transitions and durable jobs;
-- one-use confirmations;
-- destination and identity policy;
-- idempotency;
-- voice and transport lifecycle;
-- redacted event emission;
-- recovery after process restart.
-
-### SQLite
-
-SQLite WAL is sufficient for the single-machine, single-call hackathon profile. Minimum records:
-
-- `calls`;
-- `call_events`;
-- `jobs`;
-- `confirmations`;
-- `artifacts`;
-- `transports`.
-
-Postgres and Valkey are explicitly deferred until concurrency or a multi-process deployment proves they are needed.
-
-### Pipecat
-
-Pipecat owns the realtime conversation graph, VAD, turn detection, interruption and voice-engine adapters. It propagates one `call_id` through every event and transport layer.
-
-### Local voice engine
-
-The reference engine is selected by a benchmark, not by documentation preference.
-
-Reliable modular path:
+The reference voice engine is chosen by the 100-turn benchmark in `GOAL.md`. Candidate pipelines include:
 
 ```text
-streaming local STT -> compact local LLM -> generic local TTS
+streaming local STT -> compact local dialogue model -> local TTS
 ```
 
-Experimental path:
+and the feature-flagged Moshi-MLX experiment. Pipecat may own VAD, interruption and adapter composition. LiveKit may provide a local realtime room and supervision. LiveKit SIP, Asterisk or a smaller adapter may bridge local media to the mandatory gateway. None is accepted by preference alone.
+
+The installer packages or fetches the selected runtime. Python 3.12, Docker Desktop and Homebrew are not clean-machine prerequisites unless the final signed release packages them without an additional manual step.
+
+## Call state machine
+
+The normative transition table is in `GOAL.md` Section 8.2. The principal path is:
 
 ```text
-Moshi-MLX q4 full-duplex speech-to-speech
+DRAFT -> PREPARED -> AUTHORIZED -> DIAL_COMMITTED -> RINGING -> CONNECTED
+                                      -> CANCEL_REQUESTED -> HANGUP_COMMITTED
+                                      -> RECONCILING -> terminal state
 ```
 
-Inference runs natively on the Mac to preserve Metal/MLX acceleration. Fredo creates an isolated Python 3.12 runtime because the reference system Python is 3.14 and Moshi currently recommends 3.12.
+The authorization binds the normalized destination, verified caller identity, canonical intent, maximum duration, locale, policy version, install ID, release SHA, lease ID and idempotency key.
 
-### LiveKit
+Dial, cancel, and hangup effects are preceded by durable `DIAL_COMMITTED`, `CANCEL_REQUESTED`, and `HANGUP_COMMITTED` events. When a timeout or crash leaves carrier acceptance uncertain, Fredo persists `RECONCILING`, queries the gateway using the existing idempotency key, and does not create another call. Reconciliation ends in `COMPLETED`, `CANCELLED`, `FAILED`, or `UNKNOWN_TERMINAL`; a later attempt requires a new native authorization.
 
-LiveKit owns the realtime room, media routing and optional local supervision surface. It does not own business policy or carrier credentials.
-
-### LiveKit SIP
-
-LiveKit SIP bridges the realtime room to SIP. It can connect directly to the verified carrier trunk or to Asterisk.
-
-### Asterisk
-
-Asterisk is the telecom boundary for carrier-specific behavior, codec negotiation, DTMF, call detail and future SIM/Bluetooth adapters. It may be removed from the critical path if direct LiveKit SIP proves more reliable for the judged trunk.
-
-### PyVoIP lab adapter
-
-PyVoIP is useful for a minimal pure-Python SIP/RTP diagnostic. Its documented PCMA/PCMU and telephone-event support is narrow, and the audio buffering/resampling layer remains Fredo's responsibility. It is not the trusted judged-call transport.
-
-## Call lifecycle
-
-```text
-draft
-  -> awaiting_confirmation
-  -> ready
-  -> dialing
-  -> ringing
-  -> connected
-  -> completed | failed | cancelled
-```
-
-A confirmation binds:
-
-- resolved destination;
-- verified caller identity;
-- user-visible intent;
-- duration cap;
-- expiry time;
-- unique call request fingerprint.
-
-Changing any bound field requires a new confirmation.
-
-## End-to-end sequence
+## End-to-end judged sequence
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant C as Codex/Fredo skill
-    participant F as fredod
-    participant V as Local voice runtime
-    participant S as SIP transport
-    participant J as Judge phone
+    participant J as Judge
+    participant C as Codex task
+    participant G as Ginse / provider
+    participant F as Fredo on Mac
+    participant A as Demo-access authority
+    participant W as SIP policy gateway
+    participant P as Judge phone
 
-    U->>C: Ask Fredo to call
-    C->>F: prepare(destination, intent)
-    F-->>C: preview + confirmation challenge
-    C-->>U: Show exact call
-    U->>C: Confirm
-    C->>F: confirm(challenge)
-    F->>S: Dial verified destination
-    S->>J: PSTN call
-    J-->>S: Answer
-    S<<->>V: Bidirectional audio
-    V-->>F: Events and structured outcome
-    F-->>C: Terminal result
-    C-->>U: Summary and next actions
+    J->>C: One prompt with consenting PHONE_E164
+    C->>C: Create protected device key and random install ID
+    C->>G: Resolve profile + key thumbprint; no destination or intent
+    G-->>C: Signed plan + one-time non-dialing claim
+    C->>F: Install exact release and invoke fredo directly
+    F->>A: Idempotent claim redemption + key proof
+    A-->>F: Bounded gateway capability
+    F-->>J: Native DialPreview
+    J->>F: Confirm once
+    F->>F: Sign and persist DialAuthorization
+    F->>W: Dial request + helper attestation + device proof
+    W->>W: Verify and atomically consume authorization
+    W->>P: PSTN call from verified team identity
+    P-->>F: Bidirectional SIP/RTP via gateway
+    F-->>C: Redacted structured terminal result
 ```
 
-## Data and network boundary
+The phone number remains in the original Codex task and local Fredo request. It is structurally absent from the Ginse request and provider response.
 
-### Bootstrap network
+## Network and data boundaries
 
-Allowed after explicit approval:
+### Bootstrap phase
 
-- Ginse action and manifest;
-- pinned Git repository revision;
-- pinned model/runtime artifacts;
-- container registry content used by the selected profile.
+After explicit Codex approval, Fredo may reach the declared Codex/Ginse control endpoints, Fredo provider, demo-access authority, signed artifact origins and pinned runtime/model origins. Every executable byte must match the signed manifest before activation.
 
-### Live-call network
+### Live-call phase
 
-The zero-hosted-AI hackathon profile permits:
+The call-side runtime permits only local IPC plus the declared demo-access, SIP/RTP gateway and carrier paths required by the active phase. Model registries, Ginse and hosted STT/LLM/TTS endpoints are denied. The gateway may see audio in transit but may not retain or interpret it.
 
-- local loopback and container networking;
-- SIP signaling and RTP to the verified carrier;
-- optional WireGuard to an operator-owned edge when required.
+The full transcript stays local. Only a policy-redacted structured result is returned to Codex; Ginse receives no result.
 
-Ginse, model registries and hosted inference endpoints are not needed during the call.
-
-## Local data root
+### Local data root
 
 ```text
 <operator-selected-data-root>/
@@ -245,46 +202,48 @@ Ginse, model registries and hosted inference endpoints are not needed during the
   artifacts/
   models/
   runtimes/
-  fredo.sqlite3
+  fredo-state/
   run/
   transcripts/
   evidence/
 ```
 
-Recordings are disabled. Logs redact phone numbers and secrets. Transcripts are local and optional for the demonstration.
+Recordings are disabled. Logs redact phone numbers and secrets. Capabilities use the macOS Keychain where practical, while server-side expiry and quotas remain the real containment boundary.
 
 ## Deployment profiles
 
-### `mac-m4pro-24gb` — required
+### `mac-m4pro-24gb` — mandatory
 
-- native daemon and inference;
-- isolated Python 3.12 environment;
-- local Docker Compose for media/telecom services when useful;
-- one outbound call at a time.
+- native local conversation inference and durable state;
+- signed native confirmation helper;
+- one outbound call at a time;
+- no prepared Fredo runtime, Homebrew, Docker Desktop or Python dependency assumed.
 
-### `ginse-provider-public` — required
+### `ginse-provider-public` — mandatory
 
-- team-controlled HTTPS Docker host;
-- Fredo `/run`, manifest and durable idempotency store only;
-- no models, SIP credentials, phone numbers or call artifacts.
+- team-controlled HTTPS provider for the one Ginse action;
+- bootstrap plans plus authentication/idempotency state only;
+- no destination, call content, carrier key or dial authority.
 
-### `mac-plus-telecom-edge` — conditional
+### `demo-access-authority` — mandatory
 
-- Mac retains Fredo state and inference;
-- operator-owned Linux edge runs public media/SIP and may colocate the already-required Ginse provider;
-- WireGuard joins both hosts;
-- activated only when networking evidence requires it.
+- separate claim-redemption and per-install revocation role;
+- no Ginse bearer verification, call content or carrier master credential.
 
-### Everything else — post-hackathon
+### `sip-policy-gateway` — mandatory
 
-Linux inference, NVIDIA, GSM gateways, Android Bluetooth and multi-call deployments are outside the active goal.
+- team-controlled server-side enforcement and verified carrier integration;
+- shared demo carrier credential never exported to an installation;
+- RTP transit allowed, recording and call-content processing forbidden.
 
-## Non-goals
+### BYOK — post-hackathon
 
-- central Fredo call execution;
-- caller-ID spoofing;
-- bulk or anonymous dialing;
-- hosted call-side AI;
-- mandatory MCP;
-- mandatory public telecom edge;
-- production-grade multi-user scaling during the hackathon.
+Per-install carrier ownership and BYOK are explicitly deferred. They must preserve the same confirmation, policy, idempotency, privacy and evidence contracts when added.
+
+## Rejected assumptions
+
+- Hosted Codex orchestration does not imply hosted call-side inference.
+- A direct Mac-to-carrier path is not acceptable for the judged shared-key demo because it bypasses server-side enforcement.
+- A local confirmation rendered only as terminal text is not the required native authorization surface.
+- A retry after an uncertain dial result is not recovery.
+- An elaborate media stack is not evidence of correctness; only the acceptance measurements are.
