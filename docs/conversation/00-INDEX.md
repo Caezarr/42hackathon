@@ -14,6 +14,7 @@ Le projet est documenté de manière autonome, sans reprendre les idées ou la s
 6. [Publication vers GitHub](./06-publication-github.md)
 7. [GitHub CLI portable sans Winget](./07-github-cli-portable.md)
 8. [Publication par fork et pull request](./08-publication-par-fork.md)
+9. [Compréhension actuelle du projet](./09-comprehension-actuelle.md)
 
 ## Décision actuelle
 
