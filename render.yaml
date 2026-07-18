@@ -25,6 +25,8 @@ services:
         sync: false
       - key: FREDO_GINSE_OWNERSHIP_TOKEN
         sync: false
+      - key: FREDO_GINSE_DEBUG_AUTH
+        value: "1"
     disk:
       name: fredo-ginse-data
       mountPath: /data
