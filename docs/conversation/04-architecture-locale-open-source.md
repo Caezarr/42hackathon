@@ -1,5 +1,7 @@
 # Moment 4 — Architecture entièrement locale et open source
 
+> Mise à jour : le scénario de démonstration par softphone local est remplacé par un appel vers le vrai téléphone du jury via un trunk opérateur. Voir le [moment 10](./10-codex-cli-appel-jury.md).
+
 Date : 18 juillet 2026
 
 ## Nouvelle contrainte

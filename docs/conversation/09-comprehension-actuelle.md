@@ -1,5 +1,7 @@
 # Moment 9 — Compréhension actuelle du projet
 
+> Mise à jour : Codex CLI local est retenu et la démonstration doit joindre le vrai téléphone du jury. Voir le [moment 10](./10-codex-cli-appel-jury.md).
+
 Date : 18 juillet 2026
 
 ## Vision comprise
@@ -138,4 +140,3 @@ La stratégie est donc de sécuriser la boucle dans cet ordre :
 - Architecture Codex : élevé.
 - Pile exacte de modèles : encore à valider sur le matériel.
 - Téléphonie publique : volontairement hors MVP initial.
-
