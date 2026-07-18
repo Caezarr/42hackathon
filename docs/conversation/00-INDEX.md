@@ -18,6 +18,7 @@ Le projet est documenté de manière autonome, sans reprendre les idées ou la s
 10. [Codex CLI local et appel réel du jury](./10-codex-cli-appel-jury.md)
 11. [Push Git après chaque modification](./11-push-apres-chaque-modification.md)
 12. [Recherche du travail du coéquipier](./12-recherche-travail-coequipier.md)
+13. [Passage aux commits directs sur main](./13-commits-directs-main.md)
 
 ## Décision actuelle
 
