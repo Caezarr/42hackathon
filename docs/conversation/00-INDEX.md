@@ -16,6 +16,7 @@ Le projet est documenté de manière autonome, sans reprendre les idées ou la s
 8. [Publication par fork et pull request](./08-publication-par-fork.md)
 9. [Compréhension actuelle du projet](./09-comprehension-actuelle.md)
 10. [Codex CLI local et appel réel du jury](./10-codex-cli-appel-jury.md)
+11. [Push Git après chaque modification](./11-push-apres-chaque-modification.md)
 
 ## Décision actuelle
 
