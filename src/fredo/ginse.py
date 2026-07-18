@@ -25,10 +25,15 @@ from urllib.parse import urlsplit
 
 
 _DEBUG_AUTH_CLAIMS: dict[str, Any] = {}
+_DEBUG_INPUT: dict[str, Any] = {}
 
 
 def debug_auth_claims() -> dict[str, Any]:
     return dict(_DEBUG_AUTH_CLAIMS)
+
+
+def debug_input_shape() -> dict[str, Any]:
+    return dict(_DEBUG_INPUT)
 
 
 ACTION_LABEL = "Prepare Fredo demo"

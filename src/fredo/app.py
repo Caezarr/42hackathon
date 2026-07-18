@@ -21,6 +21,7 @@ from .ginse import (
     SQLiteIdempotencyStore,
     build_manifest,
     debug_auth_claims,
+    debug_input_shape,
     prepare_fredo_demo_run,
 )
 from .policy import PolicyError, validate_call_request
@@ -149,6 +150,7 @@ def create_app(
             }
         if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1":
             payload["auth_debug"] = debug_auth_claims()
+            payload["input_debug"] = debug_input_shape()
         return JSONResponse(payload, status_code=200 if not missing else 503)
 
     async def ginse_manifest(request: Request) -> JSONResponse:
@@ -199,6 +201,14 @@ def create_app(
             )
             return JSONResponse(run_result.as_dict(), status_code=200)
         except ProviderError as exc:
+            if os.getenv("FREDO_GINSE_DEBUG_AUTH") == "1" and exc.code == "invalid_input":
+                _debug_input = payload if isinstance(payload, dict) else {}
+                from . import ginse as _ginse_module
+
+                _ginse_module._DEBUG_INPUT.clear()
+                _ginse_module._DEBUG_INPUT.update(
+                    {"type": type(payload).__name__, "keys": sorted(_debug_input.keys())}
+                )
             return JSONResponse({"error": exc.code, "message": str(exc)}, status_code=exc.status_code)
         except Exception:
             logger.exception("Unexpected Ginse provider error")
