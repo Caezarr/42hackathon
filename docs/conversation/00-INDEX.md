@@ -19,6 +19,7 @@ Le projet est documenté de manière autonome, sans reprendre les idées ou la s
 11. [Push Git après chaque modification](./11-push-apres-chaque-modification.md)
 12. [Recherche du travail du coéquipier](./12-recherche-travail-coequipier.md)
 13. [Passage aux commits directs sur main](./13-commits-directs-main.md)
+14. [Comparaison du push du coéquipier et de notre push](./14-comparaison-pushs.md)
 
 ## Décision actuelle
 
