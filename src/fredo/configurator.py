@@ -7,7 +7,7 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
-from .policy import FR_MOBILE_RE, normalize_e164
+from .policy import normalize_e164
 
 
 def _secret_prompt(label: str, existing: str | None) -> str:
@@ -38,12 +38,10 @@ def configure_env(path: Path = Path(".env")) -> Path:
     )
     allowed = normalize_e164(
         _plain_prompt(
-            "Numéro mobile consentant autorisé (+336/+337)",
+            "Numéro consentant autorisé (E.164, ex. +31636409680)",
             current.get("FREDO_ALLOWED_NUMBERS"),
         )
     )
-    if not FR_MOBILE_RE.fullmatch(allowed):
-        raise ValueError("La démo autorise uniquement un mobile français +336/+337")
     if not twilio_sid.startswith("AC"):
         raise ValueError("TWILIO_ACCOUNT_SID doit commencer par AC")
 

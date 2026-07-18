@@ -8,7 +8,6 @@ from .settings import Settings
 
 
 E164_RE = re.compile(r"^\+[1-9][0-9]{7,14}$")
-FR_MOBILE_RE = re.compile(r"^\+33[67][0-9]{8}$")
 GINSE_PROFILE = "hosted-voice-mvp"
 GINSE_SESSION_RE = re.compile(r"^demo_[A-Za-z0-9_-]{16,64}$")
 GINSE_EXPIRY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
@@ -97,11 +96,6 @@ def validate_call_request(
         raise PolicyError("unknown_fields", f"Unknown fields: {', '.join(unknown)}")
 
     destination = normalize_e164(payload.get("to"))
-    if not FR_MOBILE_RE.fullmatch(destination):
-        raise PolicyError(
-            "unsupported_destination",
-            "The hackathon profile only permits French +336/+337 mobile numbers",
-        )
     if destination not in settings.allowed_numbers:
         raise PolicyError("destination_not_allowed", "Destination is not pre-enrolled")
 

@@ -4,7 +4,7 @@ import shutil
 import sys
 from dataclasses import dataclass
 
-from .policy import FR_MOBILE_RE
+from .policy import E164_RE
 from .settings import Settings
 
 
@@ -26,7 +26,7 @@ def run_checks(settings: Settings, *, quick_tunnel: bool) -> list[Check]:
     )
     endpoint_ready = bool(settings.endpoint_secret and len(settings.endpoint_secret) >= 24)
     numbers_valid = bool(settings.allowed_numbers) and all(
-        FR_MOBILE_RE.fullmatch(number) for number in settings.allowed_numbers
+        E164_RE.fullmatch(number) for number in settings.allowed_numbers
     )
     tunnel_ready = bool(shutil.which("cloudflared")) if quick_tunnel else bool(settings.public_url)
     return [

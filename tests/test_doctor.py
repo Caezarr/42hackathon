@@ -54,7 +54,7 @@ def test_fully_configured_real_profile_is_ready() -> None:
         ({"endpoint_secret": "too-short"}, "policy.endpoint_auth"),
         ({"allowed_numbers": frozenset()}, "policy.allowlist"),
         ({"allowed_numbers": frozenset({"+336"})}, "policy.allowlist"),
-        ({"allowed_numbers": frozenset({"+33812345678"})}, "policy.allowlist"),
+        ({"allowed_numbers": frozenset({"+123"})}, "policy.allowlist"),
         ({"public_url": None}, "network.tunnel"),
         ({"max_duration_seconds": 181}, "policy.duration"),
         ({"max_concurrent_calls": 2}, "policy.concurrency"),

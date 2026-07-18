@@ -66,12 +66,11 @@ def test_display_format_is_canonicalized_before_exact_allowlist_match() -> None:
     assert request.to == MOBILE_6
 
 
-@pytest.mark.parametrize("destination", ["+33812345678", "+33123456789", "+447700900123"])
-def test_non_french_mobile_class_is_rejected_before_dial(destination: str) -> None:
-    with pytest.raises(PolicyError) as caught:
-        validate_call_request(_payload(destination), _settings(destination))
+@pytest.mark.parametrize("destination", ["+31636409680", "+447700900123"])
+def test_international_e164_destination_is_allowed_when_exactly_enrolled(destination: str) -> None:
+    request = validate_call_request(_payload(destination), _settings(destination))
 
-    assert caught.value.code == "unsupported_destination"
+    assert request.to == destination
 
 
 def test_mobile_prefix_is_not_a_wildcard_allowlist() -> None:
