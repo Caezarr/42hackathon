@@ -5,12 +5,14 @@ future work.
 
 ## Operator setup
 
-Current prerequisites:
+The first Fredo skill invocation runs `scripts/bootstrap.sh`. On the reference
+Mac it installs missing `uv` and `cloudflared` through Homebrew when available,
+then downloads the pinned Python dependency graph with `uv sync --frozen`.
+Current platform prerequisite:
 
 - macOS on Apple Silicon;
 - authenticated Codex;
-- `uv`;
-- `cloudflared`;
+- Homebrew or preinstalled `uv` and `cloudflared` (the script can install them);
 - Deepgram API key;
 - Twilio Account SID, Auth Token and verified caller number;
 - exact consenting +336/+337 fixture.
@@ -89,7 +91,7 @@ command returned by Ginse.
 
 ## Current portability limit
 
-`scripts/bootstrap.sh` requires `uv`; `fredo demo` requires `cloudflared`.
-Therefore a truly clean Mac with only Codex installed is not yet supported.
-Packaging a signed standalone runtime and pinned tunnel binary is a
-post-hackathon deliverable, not a hidden completed feature.
+The reference Mac path now bootstraps `uv`, `cloudflared` and Python
+dependencies automatically when Homebrew is available. A truly clean Mac with
+neither Homebrew nor a package-manager path still needs a signed standalone
+runtime and tunnel bundle; that remains post-hackathon work.

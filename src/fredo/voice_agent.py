@@ -206,9 +206,11 @@ class VoiceAgentSession:
                 except json.JSONDecodeError:
                     arguments = {}
                 answer = str(arguments.get("answer", "")).strip()[:500]
+                summary = str(arguments.get("summary", "")).strip()[:1000]
                 content = {
                     "works": arguments.get("works") is True,
                     "answer": answer,
+                    "summary": summary,
                 }
                 await self.on_outcome(content)
                 self._finish_requested.set()

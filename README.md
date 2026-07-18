@@ -6,12 +6,12 @@
 
 Fredo is a guarded outbound phone capability for Codex. The immediate
 hackathon profile runs the control surface on the team's Mac, uses Twilio for
-PSTN access, and uses Deepgram Voice Agent for hosted French STT, dialogue and
+PSTN access, and uses Deepgram Voice Agent for hosted English STT, dialogue and
 TTS.
 
 ## Status
 
-The runtime, CLI, French agent configuration, Twilio media bridge, automatic
+The runtime, CLI, English agent configuration, Twilio media bridge, automatic
 tunnel, Codex plugin and tests are implemented. The package builds and the
 offline suite passes.
 
@@ -28,7 +28,7 @@ flowchart LR
     C --> U["Native macOS DialPreview"]
     U --> T["Twilio outbound PSTN"]
     T <--> W["Twilio Media Stream over quick tunnel"]
-    W <--> D["Deepgram Voice Agent: hosted STT + LLM + Aura-2 French TTS"]
+    W <--> D["Deepgram Voice Agent: hosted STT + LLM + Aura-2 English TTS"]
     T --> P["Consenting judge phone"]
     C --> J
 ```
@@ -40,9 +40,10 @@ intent, audio, transcript, credentials or result.
 
 ## Team-Mac setup
 
-Prerequisites for the current hackathon build are Apple Silicon/macOS,
-[`uv`](https://docs.astral.sh/uv/) and `cloudflared`. The demo operator performs
-this once:
+The current hackathon build targets Apple Silicon/macOS. The first Fredo
+invocation runs the bootstrap script, installs missing `uv`/`cloudflared` via
+Homebrew when available, and downloads the pinned dependency graph. The demo
+operator performs this once:
 
 ```bash
 git clone https://github.com/Caezarr/42hackathon.git
@@ -85,7 +86,7 @@ The command:
 6. returns a structured transcript/result, then tears down the local server and
    tunnel.
 
-Closing the dialog means zero carrier call. Only exact pre-enrolled French
+Closing the dialog means zero carrier call. Only exact pre-enrolled
 mobile numbers pass. Caller-ID spoofing, emergency/short/premium numbers,
 recording, bulk calling and arbitrary remote tools are out of scope and blocked.
 
@@ -109,12 +110,14 @@ codex plugin add fredo@fredo-local
 Installed skills are loaded in a new Codex task/session. During an initial
 same-task install, Codex invokes the newly installed `fredo` executable directly.
 
-Target jury prompt:
+Target jury prompt (English):
 
-> Use Ginse to prepare Fredo from `github.com/Caezarr/42hackathon`, then call
-> `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in
-> French, disclose immediately that you are an automated synthetic voice, ask
-> whether the demo works, then return the answer here.
+> Call `<NAME>` at `<PHONE_E164>` to talk about `<PURPOSE>`. This number belongs
+> to a consenting judge. If this is Fredo's first run, briefly tell me that you
+> are installing the dependencies and it will take a short moment; after that,
+> calls should be one prompt. Speak English, disclose immediately that you are
+> an automated synthetic voice, ask whether the demo works, then return the
+> answer and a concise factual summary here.
 
 ## Ginse contract
 
@@ -127,6 +130,16 @@ Ginse correctly classifies builder output as untrusted data.
 The provider contract requires Ed25519 bearer verification, strict schemas and
 durable SQLite idempotency. Publishing and live verification remain before the
 final jury gate. See [docs/GINSE.md](docs/GINSE.md).
+
+## Deploy the Ginse provider on Render
+
+The repository includes a [`render.yaml`](render.yaml) Blueprint. In Render,
+create a new Blueprint from `Caezarr/42hackathon`, choose the `render.yaml`
+file, and use the generated `onrender.com` URL as `FREDO_PUBLIC_URL`. Fill the
+four `sync: false` Ginse variables from the official Ginse bootstrap, then
+redeploy. The Blueprint uses the existing Docker image, `/health` check and a
+1 GB persistent disk for the Ginse idempotency database. Render persistent
+disks require a paid web-service plan.
 
 ## Commands
 

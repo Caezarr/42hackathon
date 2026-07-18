@@ -87,7 +87,7 @@ The target request is:
 > Use Ginse to prepare Fredo from `github.com/Caezarr/42hackathon`, then call
 > `<PHONE_E164>`. This number belongs to a consenting judge. Introduce Fredo in
 > French, disclose immediately that you are an automated synthetic voice, ask
-> whether the demo works, then return the answer here.
+> whether the demo works, then return the answer and a concise factual summary here.
 
 One prompt means one message typed by the judge. The flow may display:
 
@@ -229,7 +229,8 @@ Run five calls to pre-enrolled consenting team/judge fixtures:
 - synthetic-voice disclosure is audible within five seconds of connection;
 - French speech is intelligible in both directions;
 - the callee can interrupt Fredo and outbound buffered audio clears;
-- Fredo asks whether the demo works and returns a faithful boolean + answer;
+- Fredo asks whether the demo works and returns a faithful boolean, answer and
+  concise factual summary;
 - every call terminates voluntarily or at the 180-second hard cap;
 - no Twilio recording resource is created;
 - median answer-to-first-agent-audio latency is under 1.5 seconds, p95 under

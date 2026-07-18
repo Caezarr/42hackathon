@@ -65,7 +65,7 @@ def test_skill_frontmatter_and_safety_contract() -> None:
     contents = SKILL_MANIFEST.read_text(encoding="utf-8")
 
     assert frontmatter["name"] == "fredo-call"
-    assert "English or French" in frontmatter["description"]
+    assert "English" in frontmatter["description"]
     assert contents.index("Prepare Fredo demo") < contents.index(
         "uv run fredo doctor --json"
     ) < contents.index("uv run fredo demo")

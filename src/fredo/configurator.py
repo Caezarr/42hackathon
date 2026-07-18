@@ -64,10 +64,10 @@ def configure_env(path: Path = Path(".env")) -> Path:
         "FREDO_MAX_DURATION_SECONDS": "180",
         "FREDO_MAX_CONCURRENT_CALLS": "1",
         "FREDO_LISTEN_MODEL": "flux-general-multi",
-        "FREDO_LISTEN_LANGUAGE": "fr",
+        "FREDO_LISTEN_LANGUAGE": "en",
         "FREDO_LLM_PROVIDER": "open_ai",
         "FREDO_LLM_MODEL": "gpt-4o-mini",
-        "FREDO_VOICE_MODEL": "aura-2-agathe-fr",
+        "FREDO_VOICE_MODEL": "aura-2-thalia-en",
         "FREDO_TELEPHONY_PROVIDER": "real",
     }
     lines = [

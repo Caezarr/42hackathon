@@ -40,6 +40,8 @@ def _is_successful_real_result(result: object) -> bool:
         and isinstance(outcome.get("works"), bool)
         and isinstance(outcome.get("answer"), str)
         and outcome["answer"].strip()
+        and isinstance(outcome.get("summary"), str)
+        and outcome["summary"].strip()
     )
 
 

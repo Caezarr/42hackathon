@@ -31,8 +31,8 @@ Deliver:
 - native macOS preview;
 - Twilio outbound call with fixed verified caller ID;
 - local μ-law 8 kHz bridge to Deepgram Voice Agent;
-- French Flux Multilingual + Aura-2 Agathe configuration;
-- tool-limited structured `finish_demo` result;
+- English Flux Multilingual + Aura-2 Thalia configuration;
+- tool-limited structured `finish_demo` result with answer and summary;
 - automatic Cloudflare quick tunnel and teardown;
 - Twilio signature validation, duration cap and concurrency one.
 
@@ -85,7 +85,7 @@ Qualification order:
 2. reject native dialog and prove zero Twilio call;
 3. connect tunnel and validate signed Twilio status callback;
 4. make one call to the team fixture;
-5. confirm French greeting/disclosure, user response, barge-in and result;
+5. confirm English greeting/disclosure, user response, barge-in and result;
 6. confirm hard hangup and no Twilio recording;
 7. repeat five times and retain timings/errors.
 
@@ -108,7 +108,7 @@ Rehearse from a clean checkout on the team Mac:
 
 ```text
 one prompt -> Ginse preparation receipt -> doctor -> native confirmation
-           -> real call -> structured answer in same Codex task
+           -> real call -> structured answer + summary in same Codex task
 ```
 
 Exit:

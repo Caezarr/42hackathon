@@ -4,6 +4,7 @@
 !.env.example
 !.env.ginse.example
 .upstreams/
+.fredo-tools/
 .local-state/
 secrets/
 transcripts/

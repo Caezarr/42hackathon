@@ -63,7 +63,7 @@ sequenceDiagram
     A->>D: Voice Agent settings + binary μ-law
     D->>A: Binary μ-law + events
     A->>T: Media / clear on barge-in
-    D->>A: finish_demo(works, answer)
+    D->>A: finish_demo(works, answer, summary)
     A->>T: Hangup current call
     A-->>C: Structured terminal result
     C-->>J: Answer in same Codex task
@@ -72,11 +72,11 @@ sequenceDiagram
 ## Voice configuration
 
 - input/output: μ-law mono, 8 kHz, no transcoding;
-- STT: `flux-general-multi`, version v2, `language_hints=["fr"]`;
+- STT: `flux-general-multi`, version v2, `language_hints=["en"]`;
 - dialogue: Deepgram-managed `open_ai/gpt-4o-mini` default;
-- TTS: `aura-2-agathe-fr` default;
+- TTS: `aura-2-thalia-en` default;
 - first greeting discloses automated synthetic voice and no recording;
-- only function: `finish_demo(works, answer)`.
+- only function: `finish_demo(works, answer, summary)`.
 
 Model names are configuration values but the judged release freezes them.
 Changing a model invalidates live-call evidence.
