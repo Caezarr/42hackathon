@@ -1,0 +1,9 @@
+# Default owner for Fredo
+* @Caezarr
+
+# Call-safety surface: policy, telephony and voice agent decide who gets called and what is said
+/src/fredo/ @Caezarr
+/codex-plugin/ @Caezarr
+/schemas/ @Caezarr
+/deploy/ @Caezarr
+/.github/workflows/ @Caezarr
