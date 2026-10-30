@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Caezarr/42hackathon/security/advisories/new
+    about: Report security issues privately via GitHub Security Advisories, not in a public issue.
+  - name: Setup and usage
+    url: https://github.com/Caezarr/42hackathon#readme
+    about: Install steps, required Twilio/Deepgram config and the demo flow are in the README.

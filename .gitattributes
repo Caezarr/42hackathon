@@ -1,0 +1,13 @@
+# Normalize line endings so scripts behave the same on macOS, Linux and Windows.
+* text=auto
+
+# Bash scripts must keep LF or they fail with "bad interpreter" on Linux/macOS.
+*.sh text eol=lf
+Dockerfile text eol=lf
+
+# PowerShell scripts for the Windows voice-clone POC keep CRLF.
+*.ps1 text eol=crlf
+
+# Lockfiles are generated: collapse them in diffs and keep them out of language stats.
+uv.lock linguist-generated=true
+voice-clone-poc/uv.lock linguist-generated=true
