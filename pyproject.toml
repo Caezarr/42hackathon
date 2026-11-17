@@ -43,3 +43,7 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
+# Pin the rule set so a ruff upgrade does not change which rules run (0.17 enables far more by default than 0.15).
+select = ["E4", "E7", "E9", "F"]
